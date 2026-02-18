@@ -18,7 +18,7 @@ except Exception:
 from core.models import LampioneManutenzione
 
 # --- CONFIGURAZIONE FILE ---
-NOME_FILE = 'lampioni_manutenzione_coordinate.csv'
+NOME_FILE = 'lampioni_corretti.csv'
 
 def clean_int(value, default=0):
     """Converte valori NaN, float o stringhe in intero. Restituisce default se nullo."""
