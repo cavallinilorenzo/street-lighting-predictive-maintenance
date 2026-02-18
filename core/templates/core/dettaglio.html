@@ -52,7 +52,7 @@
         .table-container {
             background: var(--card-bg);
             border-radius: 16px;
-            overflow: hidden; /* Per arrotondare gli angoli della tabella */
+            overflow: hidden;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             border: 1px solid rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(10px);
@@ -73,14 +73,14 @@
             font-size: 0.8rem;
             letter-spacing: 1px;
             padding: 18px 24px;
-            user-select: none; /* Evita selezione testo cliccando veloce */
+            user-select: none;
         }
         
         .table-custom td {
             border-bottom: 1px solid rgba(255,255,255,0.05);
             vertical-align: middle;
             padding: 16px 24px;
-            background-color: transparent; /* Importante per vedere l'hover */
+            background-color: transparent;
         }
 
         /* Hover sulla riga */
@@ -88,7 +88,7 @@
             background-color: var(--table-hover) !important;
         }
 
-        /* Link Intestazione Tabella (Ordinamento) */
+        /* Link Intestazione Tabella */
         .sort-link {
             color: var(--accent);
             text-decoration: none;
@@ -109,12 +109,11 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #94a3b8; /* Grigio di base */
+            color: #94a3b8;
             transition: color 0.2s ease;
             cursor: help;
         }
 
-        /* Colore descrizione in hover */
         .table-custom tbody tr:hover .col-desc-text {
             color: #fff !important; 
         }
@@ -184,6 +183,69 @@
             display: block;
             border: 1px solid transparent;
         }
+
+        /* =========================================
+           AGGIUNTA RESPONSIVE (CARD VIEW MOBILE)
+           ========================================= */
+        @media screen and (max-width: 991px) {
+            
+            /* Titolo più piccolo su mobile */
+            h3 { font-size: 1.5rem; word-break: break-word; }
+
+            /* Nascondiamo intestazione e bordi del container */
+            .table-container { background: transparent; box-shadow: none; border: none; backdrop-filter: none; }
+            .table-custom thead { display: none; }
+
+            /* Trasformiamo le righe in CARD */
+            .table-custom tbody, .table-custom tr, .table-custom td { display: block; width: 100%; }
+            
+            .table-custom tr {
+                background: var(--card-bg) !important; /* Mantiene il tuo colore di sfondo */
+                margin-bottom: 20px;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                padding: 20px;
+            }
+
+            /* Rimuoviamo l'hover della tabella desktop */
+            .table-custom tr:hover { transform: none; background: var(--card-bg) !important; }
+
+            /* Stile celle interne alla card */
+            .table-custom td {
+                padding: 10px 0;
+                border-bottom: 1px solid rgba(255,255,255,0.05);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: right;
+            }
+
+            .table-custom td:last-child { border-bottom: none; padding-bottom: 0; padding-top: 15px; }
+
+            /* ETICHETTA (Label) a sinistra */
+            .table-custom td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: 700;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                color: var(--text-muted);
+                letter-spacing: 1px;
+            }
+
+            /* Fix contenuti */
+            .col-desc-container { max-width: 100%; }
+            /* Su mobile permettiamo al testo di andare a capo */
+            .col-desc-text { white-space: normal; text-align: right; font-size: 0.95rem; }
+            
+            /* Bottone largo su mobile */
+            .btn-neon-sm { width: 100%; padding: 10px; font-size: 1rem; text-align: center; }
+
+            /* Paginazione Mobile */
+            .pagination { justify-content: center; flex-wrap: wrap; }
+            .neon-page-link, .neon-page-active { padding: 6px 10px; font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
@@ -197,8 +259,13 @@
 
         <h3>Guasto: <span style="color: var(--accent); text-shadow: 0 0 10px rgba(0,242,255,0.2);">{{ motivo }}</span></h3>
 
+        <div class="d-block d-lg-none mb-3 small">
+            <span class="material-icons" style="font-size: 14px; vertical-align: middle;">info</span>
+            Vista ottimizzata per mobile.
+        </div>
+
         <div class="table-container">
-            <div class="table-responsive">
+            <div class="table-responsive-none">
                 <table class="table table-custom align-middle">
                     <thead>
                         <tr>
@@ -252,11 +319,11 @@
                     <tbody>
                         {% for lampione in lampioni %}
                         <tr>
-                            <td style="font-weight: 700; color: #fff;">#{{ lampione.arm_id }}</td>
+                            <td data-label="ID Lampione" style="font-weight: 700; color: #fff;">#{{ lampione.arm_id }}</td>
                             
-                            <td style="color: var(--text-muted);">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
+                            <td data-label="Data Intervento" style="color: var(--text-muted);">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
                             
-                            <td class="col-desc-container">
+                            <td data-label="Descrizione" class="col-desc-container">
                                 {% if lampione.tci_descr and lampione.tci_descr.strip %}
                                     <span class="col-desc-text" title="{{ lampione.tci_descr }}">
                                         {{ lampione.tci_descr }}
@@ -266,7 +333,7 @@
                                 {% endif %}
                             </td>
                             
-                            <td>
+                            <td data-label="Altezza">
                                 {% if lampione.arm_altezza %}
                                     <strong style="color: #fff;">{{ lampione.arm_altezza }} <small>cm</small></strong>
                                 {% else %}
@@ -274,7 +341,7 @@
                                 {% endif %}
                             </td>
                             
-                            <td class="text-end">
+                            <td data-label="" class="text-end">
                                 <a href="{% url 'dettaglio_lampione' lampione.pk %}" class="btn-neon-sm">
                                     Vedi Scheda
                                 </a>
@@ -345,56 +412,54 @@
 
     </div>
 
+    <a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
+        <span class="material-icons">home</span>
+    </a>
+
+    <style>
+        /* Stile per il bottone flottante */
+        .btn-home-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(15, 23, 42, 0.9);
+            border: 2px solid #00f2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00f2ff;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            z-index: 9999;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+        }
+
+        .btn-home-floating:hover {
+            transform: scale(1.1) rotate(-10deg);
+            background-color: #00f2ff;
+            color: #0f172a;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.8);
+        }
+
+        .btn-home-floating .material-icons {
+            font-size: 32px;
+        }
+
+        @media (max-width: 768px) {
+            .btn-home-floating {
+                bottom: 20px;
+                right: 20px;
+                width: 50px;
+                height: 50px;
+            }
+            .btn-home-floating .material-icons {
+                font-size: 24px;
+            }
+        }
+    </style>
+
 </body>
 </html>
-
-<a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
-    <span class="material-icons">home</span>
-</a>
-
-<style>
-    /* Stile per il bottone flottante */
-    .btn-home-floating {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        background-color: rgba(15, 23, 42, 0.9); /* Sfondo scuro semitrasparente */
-        border: 2px solid #00f2ff; /* Bordo Neon */
-        border-radius: 50%; /* Cerchio perfetto */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #00f2ff;
-        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); /* Alone luminoso */
-        z-index: 9999; /* Sta sopra a tutto, anche alla mappa */
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effetto rimbalzo */
-        text-decoration: none;
-    }
-
-    /* Effetto Hover (quando ci passi sopra) */
-    .btn-home-floating:hover {
-        transform: scale(1.1) rotate(-10deg); /* Si ingrandisce e ruota leggermente */
-        background-color: #00f2ff; /* Diventa pieno */
-        color: #0f172a; /* Icona scura */
-        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* Super luce */
-    }
-
-    .btn-home-floating .material-icons {
-        font-size: 32px; /* Icona grande */
-    }
-
-    /* Adattamento Mobile: su schermi piccoli lo spostiamo un po' */
-    @media (max-width: 768px) {
-        .btn-home-floating {
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-        }
-        .btn-home-floating .material-icons {
-            font-size: 24px;
-        }
-    }
-</style>
