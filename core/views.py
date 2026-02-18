@@ -1,24 +1,28 @@
 from django.shortcuts import render
-from django.db.models import Count
-from .models import LampioneManutenzione
+from .models import LampioneNuovo
+import folium
+from folium.plugins import MarkerCluster
 
-# Create your views here.
+# Questa è la tua Home Page
 def home(request):
-    # QUERY: SELECT tcs_descr, COUNT(*) as totale 
-    #        FROM core_lampionemanutenzione 
-    #        GROUP BY tcs_descr 
-    #        ORDER BY totale DESC LIMIT 5
-    
-    top_5_motivi = (
-        LampioneManutenzione.objects
-        .values('tcs_descr')                  # Raggruppa per descrizione guasto
-        .annotate(totale=Count('id'))         # Conta quanti ID ci sono per gruppo
-        .order_by('-totale')                  # Ordina decrescente (dal più alto)
-        .exclude(tcs_descr__isnull=True)      # Escludi i nulli (pulizia dati)
-        [:5]                                  # Prendi solo i primi 5 (LIMIT 5)
-    )
+    return render(request, 'core/index.html') # Carica il nuovo index.html
 
-    context = {
-        'top_5_motivi': top_5_motivi
-    }
-    return render(request, 'core/home.html', context)
+# Questa è la pagina con la Mappa
+def mappa_lampioni(request):
+    start_coords = [41.9028, 12.4964]
+    m = folium.Map(location=start_coords, zoom_start=12, tiles="cartodbpositron")
+    
+    lampioni = LampioneNuovo.objects.all()
+    marker_cluster = MarkerCluster().add_to(m)
+
+    # Ne carichiamo 1000 per avere un buon compromesso tra velocità e visione
+    for lampione in lampioni[:1000]: 
+        if lampione.latitudine and lampione.longitudine:
+            folium.Marker(
+                location=[lampione.latitudine, lampione.longitudine],
+                popup=f"ID: {lampione.arm_id}",
+                icon=folium.Icon(color="blue", icon="lightbulb-o", prefix="fa")
+            ).add_to(marker_cluster)
+
+    m = m._repr_html_()
+    return render(request, 'core/mappa.html', {'mappa': m})
