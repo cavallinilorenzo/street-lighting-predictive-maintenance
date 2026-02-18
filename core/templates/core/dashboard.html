@@ -123,92 +123,51 @@
 {{ chart_data|json_script:"dati-valori" }}
 
 <script>
-    // Recupero dati sicuro
-    const labels = JSON.parse(document.getElementById('dati-etichette').textContent);
-    const data = JSON.parse(document.getElementById('dati-valori').textContent);
+    try {
+        const labels = JSON.parse(document.getElementById('dati-etichette').textContent);
+        const data = JSON.parse(document.getElementById('dati-valori').textContent);
 
-    const ctx = document.getElementById('guastiChart').getContext('2d');
-    
-    // Palette colori Neon ottimizzata per sfondo scuro
-    const neonPalette = [
-        '#00f2ff', // Ciano (Accent)
-        '#ff0055', // Magenta Neon
-        '#ffe600', // Giallo Elettrico
-        '#bd00ff', // Viola
-        '#00ff9d', // Verde Mentale
-        '#ff9100', // Arancio
-        '#ffffff', // Bianco
-        '#0066ff', // Blu Elettrico
-        '#ff00cc', // Rosa
-        '#718096'  // Grigio (per "Altro" se capita)
-    ];
+        if (labels.length === 0) {
+            console.warn("Nessun dato trovato per il grafico.");
+        }
 
-    new Chart(ctx, {
-        type: 'doughnut', // Ciambella (più moderno della torta)
-        data: {
-            labels: labels,
-            datasets: [{
-                data: data,
-                backgroundColor: neonPalette,
-                borderColor: '#0f172a', // Colore del bordo uguale allo sfondo per staccare le fette
-                borderWidth: 2,
-                hoverOffset: 15 // Le fette si ingrandiscono al passaggio del mouse
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: 20
+        const ctx = document.getElementById('guastiChart').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: ['#00f2ff', '#ff0055', '#ffe600', '#bd00ff', '#00ff9d', '#ff9100', '#ffffff'],
+                    borderColor: '#0f172a',
+                    borderWidth: 2,
+                    hoverOffset: 15
+                }]
             },
-            plugins: {
-                // NASCONDE LA LEGENDA (Risolve il problema del disordine)
-                legend: {
-                    display: false 
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
                 },
-                // TOOLTIP PERSONALIZZATO
-                tooltip: {
-                    enabled: true,
-                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                    titleColor: '#00f2ff',
-                    bodyColor: '#fff',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
-                    padding: 12,
-                    titleFont: { size: 14, weight: 'bold' },
-                    bodyFont: { size: 14 },
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            let value = context.raw || 0;
-                            // Calcolo percentuale
-                            let total = context.chart._metasets[context.datasetIndex].total;
-                            let percentage = Math.round((value / total) * 100) + '%';
-                            return ` ${label}: ${value} (${percentage})`;
-                        }
-                    }
-                }
-            },
-            // GESTIONE CLICK
-            onClick: (evt, activeElements) => {
-                if (activeElements.length > 0) {
-                    const index = activeElements[0].index;
-                    const label = labels[index];
-                    
-                    // Se cliccano su "Altro", di solito non c'è una view specifica, 
-                    // ma se vuoi puoi lasciarlo attivo.
-                    if (label.includes("Altro")) {
-                        alert("Dettagli non disponibili per la categoria mista 'Altro'.");
-                        return;
-                    }
+                onClick: (evt, activeElements) => {
+                    if (activeElements.length > 0) {
+                        const index = activeElements[0].index;
+                        const label = labels[index];
+                        
+                        if (label.includes("Altro")) return;
 
-                    // Reindirizzamento corretto
-                    // encodeURIComponent gestisce spazi e caratteri speciali
-                    window.location.href = "/dettaglio-guasto/" + encodeURIComponent(label) + "/";
+                        // encodeURIComponent è fondamentale per i caratteri '/'
+                        const encodedLabel = encodeURIComponent(label);
+                        window.location.href = "/dettaglio-guasto/" + encodedLabel + "/";
+                    }
                 }
             }
-        }
-    });
+        });
+    } catch (error) {
+        console.error("Errore nel caricamento del grafico:", error);
+    }
 </script>
 
 </body>

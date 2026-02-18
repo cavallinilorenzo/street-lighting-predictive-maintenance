@@ -35,21 +35,24 @@ def dashboard(request):
         .annotate(totale=Count('id'))
         .order_by('-totale')
         .exclude(tcs_descr__isnull=True)
+        .exclude(tcs_descr='') # Escludi anche le stringhe vuote
     )
 
-    # 2. Logica "Top 10 + Altro"
-    TOP_N = 10
+    # DEBUG: Stampa nella console di VS Code (quella nera dove gira il server)
+    # per vedere se il database risponde
+    print(f"DEBUG: Trovati {query.count()} gruppi di guasti.")
+
     labels = []
     data = []
     
-    # Prendiamo i primi 10
-    for item in query[:TOP_N]:
+    # Prendi i primi 10
+    for item in query[:10]:
         labels.append(item['tcs_descr'])
         data.append(item['totale'])
     
     # Calcoliamo la somma di tutti gli altri (dal 11esimo in poi)
     altri_count = 0
-    for item in query[TOP_N:]:
+    for item in query[10:]:
         altri_count += item['totale']
     
     if altri_count > 0:
@@ -73,27 +76,23 @@ def dettaglio_guasto(request, motivo_guasto):
     }
     return render(request, 'core/dettaglio.html', context)
 
-def dettaglio_lampione(request, arm_id):
-    # 1. Recupera il lampione (o da errore 404 se non esiste)
-    lampione = get_object_or_404(LampioneManutenzione, arm_id=arm_id)
+def dettaglio_lampione(request, pk):
+    # Cerchiamo per la Primary Key (id) univoca di Django
+    lampione = get_object_or_404(LampioneManutenzione, pk=pk)
     
-    # 2. Crea la mappa centrata sulle coordinate del lampione
-    # Nota: Assumo che nel DB i campi siano float. Se sono nulli, metti un default.
-    lat = lampione.latitudine if lampione.latitudine else 44.647128 # Esempio (Modena)
-    lon = lampione.longitudine if lampione.longitudine else 10.925227
-    
-    m = folium.Map(location=[lat, lon], zoom_start=19, control_scale=True)
+    # Ora puoi comunque accedere all'arm_id reale del lampione
+    codice_fisico = lampione.arm_id 
 
-    # Aggiungi il marker
-    folium.Marker(
-        [lat, lon],
-        tooltip=f"Lampione {lampione.arm_id}",
-        icon=folium.Icon(color="blue", icon="info-sign")
-    ).add_to(m)
+    # Mappa e resto del codice rimangono uguali
+    lat = lampione.latitudine if lampione.latitudine else 44.647
+    lon = lampione.longitudine if lampione.longitudine else 10.925
+    m = folium.Map(location=[lat, lon], zoom_start=19)
+    folium.Marker([lat, lon], tooltip=f"Lampione {codice_fisico}").add_to(m)
 
-    # 3. Renderizza
-    context = {
+    storico = LampioneManutenzione.objects.filter(arm_id=lampione.arm_id).exclude(pk=pk).order_by('-sgn_data_inserimento')
+
+    return render(request, 'core/lampione_singolo.html', {
         'lampione': lampione,
-        'mappa': m._repr_html_() # Trasforma la mappa in HTML
-    }
-    return render(request, 'core/lampione_singolo.html', context)
+        'storico': storico,
+        'mappa': m._repr_html_()
+    })
