@@ -5,10 +5,6 @@ __pycache__/
 *.pot
 *.py[co]
 
-# --- Database (NON CARICARE MAI QUESTO) ---
-db.sqlite3
-db.sqlite3-journal
-
 # --- Ambiente Virtuale ---
 venv/
 env/
