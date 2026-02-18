@@ -6,6 +6,7 @@
     <title>Mappa Live Lampioni</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
     <link rel="icon" type="image/png" href="{% static 'core/favicon.png' %}">
     
@@ -13,7 +14,7 @@
         :root {
             --bg-dark: #0f172a;
             --accent: #00f2ff; 
-            --header-height: 60px; /* Ridotto leggermente per default */
+            --header-height: 60px;
         }
 
         body, html {
@@ -57,6 +58,9 @@
             text-transform: uppercase;
             white-space: nowrap;
         }
+        
+        /* Link nel titolo per tornare home (alternativa al bottone) */
+        .brand a { text-decoration: none; }
 
         .status-pill {
             background: rgba(0, 242, 255, 0.1);
@@ -79,7 +83,7 @@
             left: 0;
             right: 0;
             width: 100%;
-            background: #1e293b; /* Placeholder color mentre carica */
+            background: #1e293b;
         }
 
         /* Forza Folium/Leaflet */
@@ -93,54 +97,76 @@
         .map-overlay-info {
             position: absolute;
             bottom: 20px;
-            right: 20px;
+            left: 20px; /* Spostato a sinistra per non coprire il bottone home */
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(5px);
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
             color: #94a3b8;
             font-size: 0.7rem;
             pointer-events: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
+            z-index: 999;
         }
 
-        /* --- MEDIA QUERIES PER MOBILE --- */
+        /* --- STILE BOTTONE HOME FLOTTANTE (AGGIUNTO) --- */
+        .btn-home-floating {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: rgba(15, 23, 42, 0.9);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            z-index: 9999; /* Sopra la mappa */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+        }
 
+        .btn-home-floating:hover {
+            transform: scale(1.1) rotate(-10deg);
+            background-color: var(--accent);
+            color: #0f172a;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.8);
+            text-decoration: none;
+        }
+
+        .btn-home-floating .material-icons {
+            font-size: 32px;
+        }
+
+        /* --- MEDIA QUERIES --- */
         @media (max-width: 576px) {
-            :root {
-                --header-height: 55px;
-            }
+            :root { --header-height: 55px; }
+            .brand h1 { font-size: 0.8rem; }
+            
+            .status-pill { padding: 4px 6px; }
+            .status-pill span { display: none; } /* Nasconde testo lungo */
+            .status-pill::after { content: 'LIVE'; } /* Testo breve */
 
-            .brand h1 {
-                font-size: 0.8rem;
-            }
-
-            /* Nascondiamo il testo "SQL LIVE FEED" se lo schermo è troppo piccolo, lasciamo solo la pillola e il pallino */
-            .status-pill {
-                padding: 4px 6px;
-            }
-            .status-pill span {
-                display: none; /* Nasconde il testo */
-            }
-            .status-pill::after {
-                content: 'LIVE'; /* Testo abbreviato per mobile */
-            }
-
-            .map-overlay-info {
-                left: 20px; /* Su mobile diventa full width o quasi */
+            /* Adattamento bottone home su mobile */
+            .btn-home-floating {
+                bottom: 20px;
                 right: 20px;
-                text-align: center;
-                bottom: 15px;
-                font-size: 0.65rem;
+                width: 50px;
+                height: 50px;
             }
+            .btn-home-floating .material-icons { font-size: 24px; }
+            
+            /* Spostiamo l'info overlay in alto o lo nascondiamo se copre troppo */
+            .map-overlay-info { display: none; } 
         }
 
         /* Animazione Pulse */
         .pulse {
-            width: 7px;
-            height: 7px;
+            width: 7px; height: 7px;
             background: var(--accent);
             border-radius: 50%;
             box-shadow: 0 0 8px var(--accent);
@@ -158,7 +184,7 @@
 
 <header>
     <div class="brand">
-        <a href="{% url 'index' %}"><h1>SmartCity <span style="color: var(--accent)">Map</span></h1></a>
+        <a href="{% url 'index' %}" style="text-decoration:none;"><h1>SmartCity <span style="color: var(--accent)">Map</span></h1></a>
         <div class="status-pill">
             <div class="pulse"></div> <span>SQL LIVE FEED</span>
         </div>
@@ -172,6 +198,10 @@
 <div class="map-overlay-info">
     <span class="d-none d-sm-inline">Sincronizzato con DB SQL • </span> <span id="clock"></span>
 </div>
+
+<a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
+    <span class="material-icons">home</span>
+</a>
 
 <script>
     function updateClock() {
