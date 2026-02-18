@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Sum
 from .models import LampioneNuovo, LampioneManutenzione
+from django.core.paginator import Paginator
+from django.shortcuts import render
 import folium
 from folium.plugins import MarkerCluster
 
@@ -66,13 +68,36 @@ def dashboard(request):
     return render(request, 'core/dashboard.html', context)
 
 def dettaglio_guasto(request, motivo_guasto):
-    # 3. Questa vista viene chiamata quando clicchi sul grafico
-    # Recupera tutti i lampioni con QUEL motivo specifico
-    lampioni = LampioneManutenzione.objects.filter(tcs_descr=motivo_guasto)
-    
+    # 1. Recupera i parametri di ordinamento (default: data decrescente)
+    sort_by = request.GET.get('sort', 'sgn_data_inserimento')
+    direction = request.GET.get('direction', 'desc')
+
+    # 2. Determina il prefisso per l'ordinamento Django ('-' significa discendente)
+    ordering = sort_by
+    if direction == 'desc':
+        ordering = '-' + sort_by
+
+    # 3. Validazione semplice per sicurezza (evita errori se l'utente scrive campi a caso)
+    valid_fields = ['arm_id', 'sgn_data_inserimento', 'tci_descr', 'arm_altezza']
+    if sort_by not in valid_fields:
+        ordering = '-sgn_data_inserimento' # Fallback sicuro
+
+    # 4. Esegui la query con l'ordinamento dinamico
+    lista_completa = LampioneManutenzione.objects.filter(
+        tcs_descr=motivo_guasto
+    ).order_by(ordering)
+
+    # 5. Paginazione (50 per pagina)
+    paginator = Paginator(lista_completa, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'motivo': motivo_guasto,
-        'lampioni': lampioni
+        'lampioni': page_obj,
+        # Passiamo i parametri al template per mantenere l'ordinamento quando cambi pagina
+        'current_sort': sort_by,
+        'current_direction': direction
     }
     return render(request, 'core/dettaglio.html', context)
 

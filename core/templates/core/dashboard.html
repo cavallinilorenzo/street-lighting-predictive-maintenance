@@ -8,6 +8,7 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="icon" type="image/png" href="{% static 'core/favicon.png' %}">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -172,3 +173,54 @@
 
 </body>
 </html>
+
+<a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
+    <span class="material-icons">home</span>
+</a>
+
+<style>
+    /* Stile per il bottone flottante */
+    .btn-home-floating {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background-color: rgba(15, 23, 42, 0.9); /* Sfondo scuro semitrasparente */
+        border: 2px solid #00f2ff; /* Bordo Neon */
+        border-radius: 50%; /* Cerchio perfetto */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00f2ff;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); /* Alone luminoso */
+        z-index: 9999; /* Sta sopra a tutto, anche alla mappa */
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effetto rimbalzo */
+        text-decoration: none;
+    }
+
+    /* Effetto Hover (quando ci passi sopra) */
+    .btn-home-floating:hover {
+        transform: scale(1.1) rotate(-10deg); /* Si ingrandisce e ruota leggermente */
+        background-color: #00f2ff; /* Diventa pieno */
+        color: #0f172a; /* Icona scura */
+        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* Super luce */
+    }
+
+    .btn-home-floating .material-icons {
+        font-size: 32px; /* Icona grande */
+    }
+
+    /* Adattamento Mobile: su schermi piccoli lo spostiamo un po' */
+    @media (max-width: 768px) {
+        .btn-home-floating {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+        }
+        .btn-home-floating .material-icons {
+            font-size: 24px;
+        }
+    }
+</style>

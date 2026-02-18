@@ -3,8 +3,11 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dettaglio {{ motivo }}</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="{% static 'core/favicon.png' %}">
     
@@ -14,7 +17,9 @@
             --accent: #00f2ff;
             --text-muted: #94a3b8;
             --card-bg: rgba(30, 41, 59, 0.7);
+            --table-hover: rgba(0, 242, 255, 0.08);
         }
+
         body {
             background-color: var(--bg-dark);
             color: #fff;
@@ -22,9 +27,12 @@
             min-height: 100vh;
             padding: 40px 0;
         }
+
         .container {
-            max-width: 1100px; /* Leggermente più largo */
+            max-width: 1200px;
         }
+
+        /* --- Link Torna Indietro --- */
         .back-link { 
             color: var(--text-muted); 
             text-decoration: none; 
@@ -33,156 +41,241 @@
             align-items: center;
             gap: 8px;
             transition: color 0.2s ease;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
         }
         .back-link:hover { color: var(--accent); }
-        
-        h3 { font-weight: 700; letter-spacing: -0.5px; margin-bottom: 30px; }
 
-        /* --- STILE TABELLA --- */
+        h3 { font-weight: 800; letter-spacing: -0.5px; margin-bottom: 30px; }
+
+        /* --- TABELLA STILIZZATA --- */
         .table-container {
             background: var(--card-bg);
             border-radius: 16px;
-            overflow: hidden;
+            overflow: hidden; /* Per arrotondare gli angoli della tabella */
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             border: 1px solid rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(10px);
         }
+
         .table-custom {
             margin-bottom: 0;
+            background-color: transparent;
             color: #e2e8f0;
         }
+
         .table-custom th {
-            background: rgba(15, 23, 42, 0.8) !important;
+            background: rgba(15, 23, 42, 0.95) !important;
             color: var(--accent);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
             font-size: 0.8rem;
-            padding: 18px 24px; /* Più spazio */
+            letter-spacing: 1px;
+            padding: 18px 24px;
+            user-select: none; /* Evita selezione testo cliccando veloce */
         }
+        
         .table-custom td {
             border-bottom: 1px solid rgba(255,255,255,0.05);
             vertical-align: middle;
-            padding: 16px 24px; /* Più spazio per leggibilità */
+            padding: 16px 24px;
+            background-color: transparent; /* Importante per vedere l'hover */
         }
-        /* Effetto hover sulla riga */
+
+        /* Hover sulla riga */
         .table-custom tbody tr:hover {
-            background-color: rgba(0, 242, 255, 0.08) !important;
+            background-color: var(--table-hover) !important;
         }
 
-        /* --- DESCRIZIONE IN HOVER (Il trucco è qui) --- */
-        .col-desc-container {
-            max-width: 350px; /* Larghezza massima della colonna */
-        }
-        .col-desc-text {
-            display: block;
-            white-space: nowrap;      /* Non andare a capo */
-            overflow: hidden;         /* Nascondi l'eccesso */
-            text-overflow: ellipsis;  /* Metti i tre puntini ... */
-            color: rgba(255, 255, 255, 0.6); /* Un po' spento di default */
-            transition: color 0.3s ease;
-            cursor: help; /* Cambia cursore per indicare che c'è info */
-        }
-        /* Quando passi sulla riga, il testo diventa bianco brillante */
-        .table-custom tbody tr:hover .col-desc-text {
-            color: #fff;
-        }
-
-        /* --- ALTRI DETTAGLI --- */
-        .id-cell { font-weight: 700; color: #fff; font-family: monospace; font-size: 1.1rem; }
-        .date-cell { color: var(--text-muted); font-size: 0.9rem; }
-        
-        /* Pulsante Neon piccolo */
-        .btn-neon-sm {
-            border: 1px solid var(--accent);
+        /* Link Intestazione Tabella (Ordinamento) */
+        .sort-link {
             color: var(--accent);
-            background: rgba(0, 242, 255, 0.1);
-            border-radius: 6px;
-            padding: 6px 14px;
-            font-size: 0.85rem;
-            font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-block;
-            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: opacity 0.2s;
         }
-        .btn-neon-sm:hover { 
-            background: var(--accent); 
-            color: #0f172a; 
-            box-shadow: 0 0 15px rgba(0, 242, 255, 0.6);
-            transform: translateY(-1px);
-        }
+        .sort-link:hover { opacity: 0.8; color: #fff; }
+        .material-icons.sort-icon { font-size: 16px; }
 
-        /* Forza il testo della descrizione a essere leggibile */
+        /* --- DESCRIZIONE TRONCATA --- */
+        .col-desc-container { max-width: 350px; }
+        
         .col-desc-text {
             display: block;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #94a3b8 !important; /* Grigio azzurro chiaro forzato */
-            transition: color 0.3s ease;
+            color: #94a3b8; /* Grigio di base */
+            transition: color 0.2s ease;
             cursor: help;
         }
 
-        /* Quando passi il mouse sulla RIGA, il testo diventa bianco brillante */
+        /* Colore descrizione in hover */
         .table-custom tbody tr:hover .col-desc-text {
-            color: #00f2ff !important; /* Diventa ciano neon in hover per massima visibilità */
+            color: #fff !important; 
         }
 
-        /* Stile per il testo di fallback (quando il dato manca) */
         .dato-assente {
-            color: #ef4444 !important; /* Rosso opaco per indicare che manca il dato */
-            opacity: 0.6;
+            color: #64748b;
             font-style: italic;
             font-size: 0.85rem;
+        }
+
+        /* --- BUTTONS --- */
+        .btn-neon-sm {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: rgba(0, 242, 255, 0.05);
+            border-radius: 8px;
+            padding: 6px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+        .btn-neon-sm:hover { 
+            background: var(--accent); 
+            color: #0f172a; 
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* --- PAGINAZIONE --- */
+        .pagination { margin-bottom: 0; }
+        .page-item { margin: 0 4px; }
+        
+        .neon-page-link {
+            background-color: transparent !important;
+            color: var(--text-muted) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 8px !important;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+        }
+
+        .neon-page-link:hover {
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            background: rgba(0, 242, 255, 0.1) !important;
+        }
+
+        .neon-page-active {
+            background-color: var(--accent) !important;
+            color: #0f172a !important;
+            border: 1px solid var(--accent) !important;
+            font-weight: 800;
+            border-radius: 8px !important;
+            padding: 8px 16px;
+            display: block;
+        }
+
+        .disabled-link {
+            color: #475569 !important;
+            border-color: #334155 !important;
+            background: transparent !important;
+            cursor: not-allowed;
+            padding: 8px 16px;
+            border-radius: 8px;
+            display: block;
+            border: 1px solid transparent;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
+        
         <a href="{% url 'statistiche' %}" class="back-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            <span class="material-icons" style="font-size: 18px;">arrow_back</span>
             Torna al Grafico
         </a>
 
-        <h3>Guasto selezionato: <span style="color: var(--accent); text-shadow: 0 0 10px rgba(0,242,255,0.3);">{{ motivo }}</span></h3>
+        <h3>Guasto: <span style="color: var(--accent); text-shadow: 0 0 10px rgba(0,242,255,0.2);">{{ motivo }}</span></h3>
 
         <div class="table-container">
             <div class="table-responsive">
                 <table class="table table-custom align-middle">
                     <thead>
                         <tr>
-                            <th>ID Lampione</th>
-                            <th>Data Intervento</th>
-                            <th>Descrizione Tecnica</th>
-                            <th>Altezza</th>
+                            <th>
+                                <a href="?page=1&sort=arm_id&direction={% if current_sort == 'arm_id' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                    ID Lampione
+                                    {% if current_sort == 'arm_id' %}
+                                        <span class="material-icons sort-icon">
+                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th>
+                                <a href="?page=1&sort=sgn_data_inserimento&direction={% if current_sort == 'sgn_data_inserimento' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                    Data Intervento
+                                    {% if current_sort == 'sgn_data_inserimento' %}
+                                        <span class="material-icons sort-icon">
+                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th>
+                                <a href="?page=1&sort=tci_descr&direction={% if current_sort == 'tci_descr' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                    Descrizione
+                                    {% if current_sort == 'tci_descr' %}
+                                        <span class="material-icons sort-icon">
+                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th>
+                                <a href="?page=1&sort=arm_altezza&direction={% if current_sort == 'arm_altezza' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                    Altezza
+                                    {% if current_sort == 'arm_altezza' %}
+                                        <span class="material-icons sort-icon">
+                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
+                                        </span>
+                                    {% endif %}
+                                </a>
+                            </th>
+
                             <th class="text-end">Azioni</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for lampione in lampioni %}
                         <tr>
-                            <td class="id-cell">#{{ lampione.arm_id }}</td>
+                            <td style="font-weight: 700; color: #fff;">#{{ lampione.arm_id }}</td>
                             
-                            <td class="date-cell">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
+                            <td style="color: var(--text-muted);">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
                             
                             <td class="col-desc-container">
-                                <span class="col-desc-text" title="{{ lampione.tci_descr|default:'Nessuna descrizione presente nel database' }}">
-                                    {% if lampione.tci_descr and lampione.tci_descr.strip %}
+                                {% if lampione.tci_descr and lampione.tci_descr.strip %}
+                                    <span class="col-desc-text" title="{{ lampione.tci_descr }}">
                                         {{ lampione.tci_descr }}
-                                    {% else %}
-                                        <span class="dato-assente">Descrizione non disponibile</span>
-                                    {% endif %}
-                                </span>
+                                    </span>
+                                {% else %}
+                                    <span class="dato-assente">Nessuna descrizione</span>
+                                {% endif %}
                             </td>
                             
-                            <td><strong>{{ lampione.arm_altezza }}</strong> <small class="text-muted">cm</small></td>
+                            <td>
+                                {% if lampione.arm_altezza %}
+                                    <strong style="color: #fff;">{{ lampione.arm_altezza }} <small>cm</small></strong>
+                                {% else %}
+                                    <span class="dato-assente">-</span>
+                                {% endif %}
+                            </td>
                             
                             <td class="text-end">
-                                <a href="{% url 'dettaglio_lampione' lampione.id %}" class="btn-neon-sm">
+                                <a href="{% url 'dettaglio_lampione' lampione.pk %}" class="btn-neon-sm">
                                     Vedi Scheda
                                 </a>
                             </td>
@@ -198,7 +291,110 @@
                 </table>
             </div>
         </div>
+
+        <nav class="mt-4" aria-label="Navigazione pagine">
+            <ul class="pagination justify-content-center align-items-center">
+                
+                {% if lampioni.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link neon-page-link" href="?page=1&sort={{ current_sort }}&direction={{ current_direction }}" title="Prima pagina">
+                            &laquo;
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link neon-page-link" href="?page={{ lampioni.previous_page_number }}&sort={{ current_sort }}&direction={{ current_direction }}">
+                            Indietro
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <span class="disabled-link">&laquo;</span>
+                    </li>
+                    <li class="page-item">
+                        <span class="disabled-link">Indietro</span>
+                    </li>
+                {% endif %}
+
+                <li class="page-item">
+                    <span class="neon-page-active">
+                        Pag. {{ lampioni.number }} di {{ lampioni.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if lampioni.has_next %}
+                    <li class="page-item">
+                        <a class="page-link neon-page-link" href="?page={{ lampioni.next_page_number }}&sort={{ current_sort }}&direction={{ current_direction }}">
+                            Avanti
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link neon-page-link" href="?page={{ lampioni.paginator.num_pages }}&sort={{ current_sort }}&direction={{ current_direction }}" title="Ultima pagina">
+                            &raquo;
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <span class="disabled-link">Avanti</span>
+                    </li>
+                    <li class="page-item">
+                        <span class="disabled-link">&raquo;</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+
     </div>
 
 </body>
 </html>
+
+<a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
+    <span class="material-icons">home</span>
+</a>
+
+<style>
+    /* Stile per il bottone flottante */
+    .btn-home-floating {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background-color: rgba(15, 23, 42, 0.9); /* Sfondo scuro semitrasparente */
+        border: 2px solid #00f2ff; /* Bordo Neon */
+        border-radius: 50%; /* Cerchio perfetto */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #00f2ff;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); /* Alone luminoso */
+        z-index: 9999; /* Sta sopra a tutto, anche alla mappa */
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effetto rimbalzo */
+        text-decoration: none;
+    }
+
+    /* Effetto Hover (quando ci passi sopra) */
+    .btn-home-floating:hover {
+        transform: scale(1.1) rotate(-10deg); /* Si ingrandisce e ruota leggermente */
+        background-color: #00f2ff; /* Diventa pieno */
+        color: #0f172a; /* Icona scura */
+        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* Super luce */
+    }
+
+    .btn-home-floating .material-icons {
+        font-size: 32px; /* Icona grande */
+    }
+
+    /* Adattamento Mobile: su schermi piccoli lo spostiamo un po' */
+    @media (max-width: 768px) {
+        .btn-home-floating {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+        }
+        .btn-home-floating .material-icons {
+            font-size: 24px;
+        }
+    }
+</style>
