@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from core.views import index, dashboard, dettaglio_guasto, dettaglio_lampione, mappa_lampioni
+from core.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
