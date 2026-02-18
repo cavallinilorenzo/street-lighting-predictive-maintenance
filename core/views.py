@@ -5,26 +5,74 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 import folium
 from folium.plugins import MarkerCluster
+import random
+from django.urls import reverse
+from datetime import datetime, timedelta
 
 def index(request):
     # Questa mancava! Serve solo a mostrare la pagina di benvenuto
     return render(request, 'core/index.html')
 
 def mappa_lampioni(request):
+    # Coordinate centrali (puoi anche calcolarle come media dei punti)
     start_coords = [41.9028, 12.4964]
-    m = folium.Map(location=start_coords, zoom_start=12, tiles="cartodbpositron")
     
-    lampioni = LampioneNuovo.objects.all()
+    # Creazione Mappa Base (Dark mode per stile "Cyberpunk" o standard)
+    m = folium.Map(location=start_coords, zoom_start=13, tiles="cartodbpositron")
+    
+    # Ottimizzazione: prendiamo solo i campi che ci servono per non appesantire la query
+    lampioni = LampioneNuovo.objects.exclude(latitudine__isnull=True).exclude(longitudine__isnull=True)[:2500]
+    
     marker_cluster = MarkerCluster().add_to(m)
 
-    # Ne carichiamo 2500 per avere un buon compromesso tra velocità e visione
-    for lampione in lampioni[:2500]: 
-        if lampione.latitudine and lampione.longitudine:
-            folium.Marker(
-                location=[lampione.latitudine, lampione.longitudine],
-                popup=f"ID: {lampione.arm_id}",
-                icon=folium.Icon(color="blue", icon="lightbulb-o", prefix="fa")
-            ).add_to(marker_cluster)
+    for lampione in lampioni:
+        # --- 1. SIMULAZIONE PREDITTIVA (Placeholder) ---
+        # Qui in futuro interrogherai il tuo modello AI. 
+        # Per ora simuliamo i "giorni rimasti alla rottura".
+        giorni_alla_rottura = random.randint(1, 365) 
+        
+        # --- 2. LOGICA COLORI (SEMAFORO) ---
+        if giorni_alla_rottura < 30:
+            colore_icona = "red"
+            stato_salute = "CRITICO"
+        elif giorni_alla_rottura < 90:
+            colore_icona = "orange"
+            stato_salute = "ATTENZIONE"
+        else:
+            colore_icona = "green"
+            stato_salute = "OTTIMO"
+
+        # --- 3. CREAZIONE LINK AL DETTAGLIO ---
+        # Usiamo 'reverse' per costruire l'URL dinamico verso la view 'dettaglio_lampione'
+        # Assicurati che nel tuo urls.py il name sia 'dettaglio_lampione'
+        url_dettaglio = reverse('dettaglio_asset', args=[lampione.pk])
+
+        # --- 4. POPUP HTML PERSONALIZZATO ---
+        # Creiamo una stringa HTML per rendere il popup bello e funzionale
+        popup_html = f"""
+            <div style="font-family: sans-serif; min-width: 150px;">
+                <h4 style="margin-bottom: 5px;">Lampione #{lampione.arm_id}</h4>
+                <b style="color: gray;">Stato:</b> 
+                <span style="color:{colore_icona}; font-weight:bold;">{stato_salute}</span><br>
+                
+                <b style="color: gray;">Prev. Rottura:</b> tra {giorni_alla_rottura} gg<br>
+                <hr style="margin: 5px 0;">
+                
+                <a href="{url_dettaglio}" target="_blank" 
+                   style="display: block; text-align:center; background-color: #00f2ff; color: #000; 
+                          padding: 5px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                   Vedi Dettaglio Completo
+                </a>
+            </div>
+        """
+
+        # Aggiunta Marker
+        folium.Marker(
+            location=[lampione.latitudine, lampione.longitudine],
+            popup=folium.Popup(popup_html, max_width=300),
+            tooltip=f"ID: {lampione.arm_id} ({stato_salute})", # Appare al passaggio del mouse
+            icon=folium.Icon(color=colore_icona, icon="lightbulb-o", prefix="fa")
+        ).add_to(marker_cluster)
 
     m = m._repr_html_()
     return render(request, 'core/mappa.html', {'mappa': m})
@@ -121,3 +169,51 @@ def dettaglio_lampione(request, pk):
         'storico': storico,
         'mappa': m._repr_html_()
     })
+
+def dettaglio_asset(request, pk):
+    # Recuperiamo l'oggetto dal modello dell'anagrafica (NON manutenzione)
+    lampione = get_object_or_404(LampioneNuovo, pk=pk)
+    
+    # --- SIMULAZIONE PREDITTIVA (AI Placeholder) ---
+    # Generiamo dati coerenti con quelli della mappa
+    # In produzione, qui chiameresti il tuo modello ML
+    giorni_rimanenti = random.randint(1, 365)
+    data_rottura = datetime.now() + timedelta(days=giorni_rimanenti)
+    
+    stato = "OTTIMO"
+    colore_stato = "#00ff9d" # Verde
+    messaggio = "Nessun intervento richiesto a breve."
+    
+    if giorni_rimanenti < 30:
+        stato = "CRITICO"
+        colore_stato = "#ff0055" # Rosso
+        messaggio = "Rischio guasto imminente! Pianificare sostituzione."
+    elif giorni_rimanenti < 90:
+        stato = "ATTENZIONE"
+        colore_stato = "#ff9100" # Arancio
+        messaggio = "Usura rilevata, monitorare nelle prossime settimane."
+
+    # Mappa statica per questo asset
+    if lampione.latitudine and lampione.longitudine:
+        m = folium.Map(location=[lampione.latitudine, lampione.longitudine], zoom_start=19, tiles="cartodbpositron")
+        folium.Marker(
+            [lampione.latitudine, lampione.longitudine], 
+            tooltip="Posizione Asset",
+            icon=folium.Icon(color="blue", icon="lightbulb-o", prefix="fa")
+        ).add_to(m)
+        mappa_html = m._repr_html_()
+    else:
+        mappa_html = None
+
+    context = {
+        'lampione': lampione,
+        'mappa': mappa_html,
+        'ai_data': {
+            'giorni': giorni_rimanenti,
+            'data_prevista': data_rottura,
+            'stato': stato,
+            'colore': colore_stato,
+            'messaggio': messaggio
+        }
+    }
+    return render(request, 'core/lampione_asset.html', context)
