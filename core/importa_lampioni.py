@@ -13,10 +13,10 @@ except Exception as e:
     sys.path.append(os.path.dirname(os.getcwd()))
     django.setup()
 
-from core.models import LampioneNuovo
+from core.models import LampioneManutenzione
 
 # --- CONFIGURAZIONE FILE ---
-NOME_FILE = 'lampioni_coordinate_finali.csv'
+NOME_FILE = 'lampioni_manutenzione_coordinate.csv'
 
 def run():
     print(f"1. Leggo il CSV: {NOME_FILE}...")
@@ -30,9 +30,9 @@ def run():
     # Sostituiamo i valori NaN con None (fondamentale per i campi Null in Django)
     df = df.where(pd.notnull(df), None)
 
-    print(f"2. CANCELLO tutti i dati esistenti dalla tabella LampioneNuovo...")
-    tot_cancellati = LampioneNuovo.objects.all().count()
-    LampioneNuovo.objects.all().delete()
+    print(f"2. CANCELLO tutti i dati esistenti dalla tabella LampioneManutenzione...")
+    tot_cancellati = LampioneManutenzione.objects.all().count()
+    LampioneManutenzione.objects.all().delete()
     print(f"   Pulizia completata: rimossi {tot_cancellati} record.")
 
     print("3. Preparazione oggetti per l'inserimento...")
@@ -41,7 +41,7 @@ def run():
     for index, row in df.iterrows():
         try:
             # Creiamo l'istanza del modello mappando i campi chiave per le tue icone
-            lampione = LampioneNuovo(
+            lampione = LampioneManutenzione(
                 arm_id = row['arm_id'],
                 
                 # Campi descrittivi per le icone (Assicurati che esistano nel models.py)
@@ -66,7 +66,7 @@ def run():
     print(f"4. Esecuzione inserimento massivo (Bulk Create) di {len(lampioni_da_creare)} elementi...")
     
     # Usiamo batch_size per evitare di sovraccaricare la memoria se i record sono molti
-    LampioneNuovo.objects.bulk_create(lampioni_da_creare, batch_size=1000)
+    LampioneManutenzione.objects.bulk_create(lampioni_da_creare, batch_size=1000)
     
     print("--- SUCCESS: Database popolato correttamente! ---")
 

@@ -34,4 +34,6 @@ class LampioneNuovo(LampioneBase):
 
 # Tabella per lampioni_con_manutenzione.csv
 class LampioneManutenzione(LampioneBase):
+    latitudine = models.FloatField(null=True, blank=True)
+    longitudine = models.FloatField(null=True, blank=True)
     pass
