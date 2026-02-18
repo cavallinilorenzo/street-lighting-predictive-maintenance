@@ -1,0 +1,215 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiche Guasti - Dashboard</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{% static 'core/favicon.png' %}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent: #00f2ff;
+            --text-main: #94a3b8;
+            --card-bg: rgba(30, 41, 59, 0.7);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .header-title {
+            text-transform: uppercase;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header-subtitle {
+            text-align: center;
+            color: var(--text-main);
+            margin-bottom: 30px;
+            font-size: 0.9rem;
+        }
+
+        .card-custom {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Pulsante Back stilizzato */
+        .btn-neon {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: transparent;
+            border-radius: 50px;
+            padding: 8px 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .btn-neon:hover {
+            background: var(--accent);
+            color: #0f172a;
+            box-shadow: 0 0 15px var(--accent);
+            transform: translateY(-2px);
+        }
+
+        /* Container per il grafico per controllarne le dimensioni */
+        .chart-wrapper {
+            position: relative;
+            height: 60vh; /* Occupa il 60% dell'altezza dello schermo */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="d-flex justify-content-between align-items-center px-2">
+        <a href="{% url 'index' %}" class="btn-neon">← Home</a>
+    </div>
+
+    <h1 class="header-title">Analisi <span style="color: var(--accent)">Guasti</span></h1>
+    <p class="header-subtitle">Distribuzione delle tipologie di intervento tecnico</p>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card-custom">
+                <div class="chart-wrapper">
+                    <canvas id="guastiChart"></canvas>
+                </div>
+                <div class="text-center mt-3">
+                    <small style="color: var(--text-main);">
+                        💡 Passa il mouse sulle sezioni per i dettagli. 
+                        <strong>Clicca</strong> per vedere la lista dei lampioni.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ chart_labels|json_script:"dati-etichette" }}
+{{ chart_data|json_script:"dati-valori" }}
+
+<script>
+    // Recupero dati sicuro
+    const labels = JSON.parse(document.getElementById('dati-etichette').textContent);
+    const data = JSON.parse(document.getElementById('dati-valori').textContent);
+
+    const ctx = document.getElementById('guastiChart').getContext('2d');
+    
+    // Palette colori Neon ottimizzata per sfondo scuro
+    const neonPalette = [
+        '#00f2ff', // Ciano (Accent)
+        '#ff0055', // Magenta Neon
+        '#ffe600', // Giallo Elettrico
+        '#bd00ff', // Viola
+        '#00ff9d', // Verde Mentale
+        '#ff9100', // Arancio
+        '#ffffff', // Bianco
+        '#0066ff', // Blu Elettrico
+        '#ff00cc', // Rosa
+        '#718096'  // Grigio (per "Altro" se capita)
+    ];
+
+    new Chart(ctx, {
+        type: 'doughnut', // Ciambella (più moderno della torta)
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: neonPalette,
+                borderColor: '#0f172a', // Colore del bordo uguale allo sfondo per staccare le fette
+                borderWidth: 2,
+                hoverOffset: 15 // Le fette si ingrandiscono al passaggio del mouse
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: 20
+            },
+            plugins: {
+                // NASCONDE LA LEGENDA (Risolve il problema del disordine)
+                legend: {
+                    display: false 
+                },
+                // TOOLTIP PERSONALIZZATO
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#00f2ff',
+                    bodyColor: '#fff',
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    titleFont: { size: 14, weight: 'bold' },
+                    bodyFont: { size: 14 },
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            // Calcolo percentuale
+                            let total = context.chart._metasets[context.datasetIndex].total;
+                            let percentage = Math.round((value / total) * 100) + '%';
+                            return ` ${label}: ${value} (${percentage})`;
+                        }
+                    }
+                }
+            },
+            // GESTIONE CLICK
+            onClick: (evt, activeElements) => {
+                if (activeElements.length > 0) {
+                    const index = activeElements[0].index;
+                    const label = labels[index];
+                    
+                    // Se cliccano su "Altro", di solito non c'è una view specifica, 
+                    // ma se vuoi puoi lasciarlo attivo.
+                    if (label.includes("Altro")) {
+                        alert("Dettagli non disponibili per la categoria mista 'Altro'.");
+                        return;
+                    }
+
+                    // Reindirizzamento corretto
+                    // encodeURIComponent gestisce spazi e caratteri speciali
+                    window.location.href = "/dettaglio-guasto/" + encodeURIComponent(label) + "/";
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
