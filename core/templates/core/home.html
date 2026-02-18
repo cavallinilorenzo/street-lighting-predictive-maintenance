@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Lampioni</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            
+            <h1 class="text-center mb-4">💡 Analisi Guasti Lampioni</h1>
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Top 5 Motivi di Guasto</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Motivo Guasto (Descrizione)</th>
+                                <th class="text-end">Numero Interventi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for motivo in top_5_motivi %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    {% if motivo.tcs_descr %}
+                                        {{ motivo.tcs_descr }}
+                                    {% else %}
+                                        <em>Non specificato</em>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end fw-bold">{{ motivo.totale }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
