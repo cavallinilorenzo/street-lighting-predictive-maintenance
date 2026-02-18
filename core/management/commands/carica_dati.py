@@ -1,71 +1,56 @@
 import csv
-from django.utils import timezone
 from datetime import datetime
 from django.core.management.base import BaseCommand
-from core.models import Lampione
+from django.utils import timezone
+from core.models import LampioneNuovo, LampioneManutenzione
 
 class Command(BaseCommand):
-    help = 'Importa dati lampioni da CSV'
+    help = 'Importa entrambi i CSV nelle tabelle dedicate'
 
-    def add_arguments(self, parser):
-        parser.add_argument('path', type=str, help='Percorso del file CSV')
+    def handle(self, *args, **options):
+        self.importa_csv('lampioni_nuovi_10k.csv', LampioneNuovo)
+        self.importa_csv('lampioni_con_manutenzione.csv', LampioneManutenzione)
 
-    def handle(self, *args, **kwargs):
-        path = kwargs['path']
-        buffer_dati = []
+    def importa_csv(self, file_path, model_class):
+        self.stdout.write(f"Caricamento di {file_path}...")
+        oggetti = []
         
-        print(f"Leggo il file: {path}...")
-
-        # Funzione helper per convertire le date italiane (gg/mm/aaaa)
-        def parse_date(date_str, is_datetime=False):
-            if not date_str or date_str.strip() == '':
-                return None
-            try:
-                if is_datetime:
-                    # Parsa la data (ancora "naive")
-                    dt = datetime.strptime(date_str, '%d/%m/%Y %H:%M:%S')
-                    # La rende "aware" (gli assegna il fuso orario corrente, es. Europe/Rome)
-                    return timezone.make_aware(dt)
-                else:
-                    # Per le date senza orario (DateField), non serve il fuso orario
-                    return datetime.strptime(date_str, '%d/%m/%Y').date()
-            except ValueError:
-                return None
-
-        with open(path, 'r', encoding='utf-8') as file:
-            # QUI STA IL TRUCCO: delimiter=';'
-            reader = csv.DictReader(file, delimiter=';')
-            
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f, delimiter=';')
             for row in reader:
-                try:
-                    l = Lampione(
-                        arm_id=int(row['arm_id']),
-                        
-                        # Parsing date
-                        arm_data_ini=parse_date(row['arm_data_ini']),
-                        arm_data_fin=parse_date(row['arm_data_fin']),
-                        
-                        # Parsing numeri (float/int)
-                        arm_altezza=float(row['arm_altezza'] or 0),
-                        arm_lunghezza_sbraccio=float(row['arm_lunghezza_sbraccio'] or 0),
-                        arm_numero_lampade=int(float(row['arm_numero_lampade'] or 0)),
-                        arm_lmp_potenza_nominale=float(row['arm_lmp_potenza_nominale'] or 0),
-                        
-                        # Stringhe
-                        tar_descr=row['tar_descr'],
-                        tpo_descr=row['tpo_descr'],
-                        
-                        # Manutenzione (Datetime)
-                        sgn_data_inserimento=parse_date(row['sgn_data_inserimento'], is_datetime=True),
-                        tcs_descr=row['tcs_descr'],
-                        tci_descr=row['tci_descr']
-                    )
-                    buffer_dati.append(l)
-                except Exception as e:
-                    print(f"Errore riga ID {row.get('arm_id', '?')}: {e}")
+                # Helper per pulire i dati
+                def clean_float(val): return float(val) if val and val.strip() else None
+                def clean_int(val): return int(float(val)) if val and val.strip() else None
+                def parse_dt(val, is_time=False):
+                    if not val or val.strip() == '': return None
+                    try:
+                        if is_time:
+                            dt = datetime.strptime(val, '%d/%m/%Y %H:%M:%S')
+                            return timezone.make_aware(dt)
+                        return datetime.strptime(val, '%d/%m/%Y').date()
+                    except: return None
 
-        # Salvataggio Bulk
-        print(f"Trovate {len(buffer_dati)} righe. Inizio salvataggio...")
-        Lampione.objects.bulk_create(buffer_dati, batch_size=2000, ignore_conflicts=True)
+                obj = model_class(
+                    arm_id=clean_int(row['arm_id']),
+                    arm_data_ini=parse_dt(row['arm_data_ini']),
+                    arm_data_fin=parse_dt(row['arm_data_fin']),
+                    arm_altezza=clean_float(row['arm_altezza']),
+                    arm_lunghezza_sbraccio=clean_float(row['arm_lunghezza_sbraccio']),
+                    arm_numero_lampade=clean_int(row['arm_numero_lampade']),
+                    arm_lmp_potenza_nominale=clean_float(row['arm_lmp_potenza_nominale']),
+                    tar_cod=row['tar_cod'],
+                    tar_descr=row['tar_descr'],
+                    tmo_id=clean_float(row['tmo_id']),
+                    tpo_cod=row['tpo_cod'],
+                    tpo_descr=row['tpo_descr'],
+                    sgn_id=clean_float(row['sgn_id']),
+                    sgn_data_inserimento=parse_dt(row['sgn_data_inserimento'], True),
+                    tcs_id=clean_float(row['tcs_id']),
+                    tcs_descr=row['tcs_descr'],
+                    tci_id=clean_float(row['tci_id']),
+                    tci_descr=row['tci_descr'],
+                )
+                oggetti.append(obj)
         
-        self.stdout.write(self.style.SUCCESS(f'Fatto! Importati {len(buffer_dati)} lampioni.'))
+        model_class.objects.bulk_create(oggetti, batch_size=1000)
+        self.stdout.write(self.style.SUCCESS(f"Completato: {len(oggetti)} righe caricate."))
