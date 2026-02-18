@@ -3,18 +3,13 @@ import sys
 import django
 import pandas as pd
 
-# --- FIX FONDAMENTALE PER IL PERCORSO ---
-# Aggiunge la cartella corrente al percorso di Python, così trova il file settings
-sys.path.append(os.getcwd())
-
 # --- CONFIGURAZIONE DJANGO ---
-# Impostiamo il modulo corretto che abbiamo letto nel tuo manage.py
+sys.path.append(os.getcwd())
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'street_lighting_predictive_maintenance.settings')
 
 try:
     django.setup()
-except ModuleNotFoundError:
-    # Se fallisce ancora, proviamo ad aggiungere la cartella madre al path
+except Exception as e:
     sys.path.append(os.path.dirname(os.getcwd()))
     django.setup()
 
@@ -24,47 +19,56 @@ from core.models import LampioneNuovo
 NOME_FILE = 'lampioni_coordinate_finali.csv'
 
 def run():
-    print("1. Leggo il CSV...")
+    print(f"1. Leggo il CSV: {NOME_FILE}...")
     try:
-        # Assicurati che il separatore sia corretto (virgola o punto e virgola)
-        # Se il file finale è quello generato dal mio script precedente, usa sep=','
+        # Nota: assicurati che il separatore sia quello corretto del tuo file finale
         df = pd.read_csv(NOME_FILE, sep=',') 
     except FileNotFoundError:
-        print(f"ERRORE: Non trovo il file '{NOME_FILE}'. Assicurati che sia nella stessa cartella dello script.")
+        print(f"ERRORE: Non trovo il file '{NOME_FILE}'.")
         return
 
-    # Pulizia dati: Pandas usa "NaN" per i vuoti, Django vuole None
+    # Sostituiamo i valori NaN con None (fondamentale per i campi Null in Django)
     df = df.where(pd.notnull(df), None)
 
-    print(f"2. CANCELLO tutti i dati vecchi dalla tabella LampioneNuovo...")
+    print(f"2. CANCELLO tutti i dati esistenti dalla tabella LampioneNuovo...")
+    tot_cancellati = LampioneNuovo.objects.all().count()
     LampioneNuovo.objects.all().delete()
+    print(f"   Pulizia completata: rimossi {tot_cancellati} record.")
 
-    print("3. Preparo i nuovi dati...")
+    print("3. Preparazione oggetti per l'inserimento...")
     lampioni_da_creare = []
 
-    # Iteriamo sulle righe del CSV
     for index, row in df.iterrows():
         try:
+            # Creiamo l'istanza del modello mappando i campi chiave per le tue icone
             lampione = LampioneNuovo(
-                # --- MAPPA QUI I CAMPI ---
-                # A sinistra i nomi nel models.py, a destra i nomi nel CSV
-                arm_id = row['arm_id'], 
+                arm_id = row['arm_id'],
                 
-                # Aggiungi qui gli altri campi se necessario (es. arm_altezza=row['arm_altezza'])
+                # Campi descrittivi per le icone (Assicurati che esistano nel models.py)
+                # Se nel tuo models.py hanno nomi diversi, correggi la parte a sinistra dell'uguale
+                tar_descr = row.get('tar_descr', 'Non noto'), # Tipo armatura
+                tpo_descr = row.get('tpo_descr', 'Non noto'), # Tipo supporto
                 
-                # Le coordinate
+                # Dati tecnici (opzionali ma utili per i popup)
+                arm_altezza = row.get('arm_altezza', 0),
+                arm_lmp_potenza_nominale = row.get('arm_lmp_potenza_nominale', 0),
+                
+                # Coordinate geografiche
                 latitudine = row['latitudine'],
                 longitudine = row['longitudine']
             )
             lampioni_da_creare.append(lampione)
+            
         except KeyError as e:
-            print(f"ERRORE: Non trovo la colonna {e} nel CSV. Controlla i nomi delle intestazioni.")
+            print(f"ERRORE: Colonna mancante nel CSV: {e}")
             return
 
-    print(f"4. Sto salvando {len(lampioni_da_creare)} nuovi lampioni nel DB...")
-    LampioneNuovo.objects.bulk_create(lampioni_da_creare)
+    print(f"4. Esecuzione inserimento massivo (Bulk Create) di {len(lampioni_da_creare)} elementi...")
     
-    print("FATTO! Database aggiornato con successo.")
+    # Usiamo batch_size per evitare di sovraccaricare la memoria se i record sono molti
+    LampioneNuovo.objects.bulk_create(lampioni_da_creare, batch_size=1000)
+    
+    print("--- SUCCESS: Database popolato correttamente! ---")
 
 if __name__ == '__main__':
     run()

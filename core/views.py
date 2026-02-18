@@ -16,7 +16,7 @@ def mappa_lampioni(request):
     marker_cluster = MarkerCluster().add_to(m)
 
     # Ne carichiamo 1000 per avere un buon compromesso tra velocità e visione
-    for lampione in lampioni[:1000]: 
+    for lampione in lampioni[:2500]: 
         if lampione.latitudine and lampione.longitudine:
             folium.Marker(
                 location=[lampione.latitudine, lampione.longitudine],
