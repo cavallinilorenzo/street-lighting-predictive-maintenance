@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mappa Live Lampioni</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -12,8 +12,8 @@
     <style>
         :root {
             --bg-dark: #0f172a;
-            --accent: #00f2ff; /* Ciano Neon per l'effetto "Luce" */
-            --header-height: 70px;
+            --accent: #00f2ff; 
+            --header-height: 60px; /* Ridotto leggermente per default */
         }
 
         body, html {
@@ -23,19 +23,19 @@
             width: 100%;
             background-color: var(--bg-dark);
             font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow: hidden; /* Evita lo scroll della pagina, si muove solo la mappa */
+            overflow: hidden;
         }
 
-        /* Header Minimalista e Moderno */
+        /* Header Responsive */
         header {
             height: var(--header-height);
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px); /* Effetto vetro satinato */
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 20px;
             position: fixed;
             top: 0;
             width: 100%;
@@ -45,77 +45,113 @@
         .brand {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .brand h1 {
             color: #fff;
-            font-size: 1.25rem;
+            font-size: 0.9rem;
             font-weight: 800;
             margin: 0;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .status-pill {
             background: rgba(0, 242, 255, 0.1);
             border: 1px solid var(--accent);
             color: var(--accent);
-            padding: 4px 12px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.65rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .pulse {
-            width: 8px;
-            height: 8px;
-            background: var(--accent);
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent);
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-
-        /* Contenitore Mappa Full Screen */
+        /* Contenitore Mappa */
         #map-wrapper {
             position: absolute;
-            top: var(--header-height); /* Inizia esattamente sotto l'header */
+            top: var(--header-height);
             bottom: 0;
             left: 0;
             right: 0;
             width: 100%;
+            background: #1e293b; /* Placeholder color mentre carica */
         }
 
-        /* Forza la mappa (iframe/div di Folium) a riempire tutto il contenitore */
-        #map-wrapper > * {
+        /* Forza Folium/Leaflet */
+        #map-wrapper iframe, #map-wrapper div {
             height: 100% !important;
             width: 100% !important;
+            border: none;
         }
 
-        /* Info flottante in basso a destra */
+        /* Overlay Info Responsive */
         .map-overlay-info {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(5px);
-            padding: 10px 15px;
+            padding: 10px 14px;
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
             color: #94a3b8;
-            font-size: 0.8rem;
-            pointer-events: none; /* Non disturba i click sulla mappa */
+            font-size: 0.7rem;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
         }
 
+        /* --- MEDIA QUERIES PER MOBILE --- */
+
+        @media (max-width: 576px) {
+            :root {
+                --header-height: 55px;
+            }
+
+            .brand h1 {
+                font-size: 0.8rem;
+            }
+
+            /* Nascondiamo il testo "SQL LIVE FEED" se lo schermo è troppo piccolo, lasciamo solo la pillola e il pallino */
+            .status-pill {
+                padding: 4px 6px;
+            }
+            .status-pill span {
+                display: none; /* Nasconde il testo */
+            }
+            .status-pill::after {
+                content: 'LIVE'; /* Testo abbreviato per mobile */
+            }
+
+            .map-overlay-info {
+                left: 20px; /* Su mobile diventa full width o quasi */
+                right: 20px;
+                text-align: center;
+                bottom: 15px;
+                font-size: 0.65rem;
+            }
+        }
+
+        /* Animazione Pulse */
+        .pulse {
+            width: 7px;
+            height: 7px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -124,12 +160,8 @@
     <div class="brand">
         <h1>SmartCity <span style="color: var(--accent)">Map</span></h1>
         <div class="status-pill">
-            <div class="pulse"></div> SQL LIVE FEED
+            <div class="pulse"></div> <span>SQL LIVE FEED</span>
         </div>
-    </div>
-    <div class="text-right d-none d-md-block">
-        <small style="color: #64748b; display: block;">Gestione Illuminazione Pubblica</small>
-        <small style="color: #fff; font-weight: 600;">Controllo Dinamico Asset</small>
     </div>
 </header>
 
@@ -138,7 +170,7 @@
 </div>
 
 <div class="map-overlay-info">
-    Sincronizzato con DB SQL • <span id="clock"></span>
+    <span class="d-none d-sm-inline">Sincronizzato con DB SQL • </span> <span id="clock"></span>
 </div>
 
 <script>

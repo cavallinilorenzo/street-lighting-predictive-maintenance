@@ -13,95 +13,132 @@
             --bg-dark: #0f172a;
             --accent: #00f2ff;
             --header-height: 70px;
+            --card-bg: rgba(30, 41, 59, 0.7);
         }
 
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
+            min-height: 100%;
             width: 100%;
             background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
             font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #f8fafc;
         }
 
         header {
             height: var(--header-height);
             background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
+            justify-content: center; /* Centrato su mobile, space-between su desktop via media query */
+            padding: 0 20px;
             position: fixed;
             top: 0;
             width: 100%;
             z-index: 1000;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
         .brand h1 {
             color: #fff;
-            font-size: 1.25rem;
+            font-size: 1.1rem;
             font-weight: 800;
             margin: 0;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
         }
 
-        .dashboard {
-            margin-top: calc(var(--header-height) + 20px);
-            padding: 20px;
+        .dashboard-container {
+            padding-top: calc(var(--header-height) + 40px);
+            padding-bottom: 40px;
+            display: flex;
+            align-items: center;
+            min-height: 100vh;
         }
 
         .card {
-            background: rgba(15, 23, 42, 0.8);
+            background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 20px;
             color: #94a3b8;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            padding: 30px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 30px 20px;
+            height: 100%;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
         }
 
-        .card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+        /* Effetto Hover solo per dispositivi con mouse */
+        @media (hover: hover) {
+            .card:hover {
+                transform: translateY(-8px);
+                background: rgba(30, 41, 59, 0.9);
+                border-color: var(--accent);
+                box-shadow: 0 15px 30px rgba(0, 242, 255, 0.1);
+            }
+            .card:hover .material-icons {
+                transform: scale(1.1);
+                text-shadow: 0 0 15px var(--accent);
+            }
         }
 
         .card h5 {
             color: #fff;
             margin-top: 15px;
+            font-weight: 700;
+            font-size: 1.25rem;
         }
 
         .card p {
             font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 0;
+            max-width: 250px;
         }
 
         .card .material-icons {
             font-size: 48px;
             color: var(--accent);
-        }
-
-        .btn-primary {
-            background-color: var(--accent);
-            border-color: var(--accent);
-        }
-
-        .btn-primary:hover {
-            background-color: #00d4e6;
-            border-color: #00d4e6;
+            transition: all 0.3s ease;
         }
 
         a {
-            text-decoration: none;
+            text-decoration: none !important;
+        }
+
+        /* --- RESPONSIVE ADJUSTMENTS --- */
+
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 60px;
+            }
+            .dashboard-container {
+                padding-top: calc(var(--header-height) + 20px);
+                align-items: flex-start; /* Evita centratura verticale su mobile per scroll migliore */
+            }
+            .card {
+                padding: 25px 15px;
+            }
+            .card .material-icons {
+                font-size: 40px;
+            }
+            .card h5 {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Per schermi molto piccoli */
+        @media (max-width: 400px) {
+            .brand h1 {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -113,28 +150,31 @@
     </div>
 </header>
 
-<div class="dashboard container">
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <a href="/mappa/">
-                <div class="card">
-                    <span class="material-icons">map</span>
-                    <h5>Mappa Interattiva</h5>
-                    <p>Visualizza la posizione dei lampioni e i dati in tempo reale.</p>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-6 mb-4">
-            <a href="/statistiche/">
-                <div class="card">
-                    <span class="material-icons">bar_chart</span>
-                    <h5>Statistiche</h5>
-                    <p>Consulta le statistiche sui guasti e gli interventi.</p>
-                </div>
-            </a>
+<main class="dashboard-container">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            <div class="col-12 col-md-6 col-lg-5">
+                <a href="/mappa/">
+                    <div class="card">
+                        <span class="material-icons">map</span>
+                        <h5>Mappa Interattiva</h5>
+                        <p class="text-center">Visualizza la posizione dei lampioni e i dati in tempo reale.</p>
+                    </div>
+                </a>
+            </div>
+            
+            <div class="col-12 col-md-6 col-lg-5">
+                <a href="/statistiche/">
+                    <div class="card">
+                        <span class="material-icons">bar_chart</span>
+                        <h5>Statistiche</h5>
+                        <p class="text-center">Consulta le analisi sui guasti e gli interventi tecnici.</p>
+                    </div>
+                </a>
+            </div>
         </div>
     </div>
-</div>
+</main>
 
 </body>
 </html>
