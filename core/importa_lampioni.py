@@ -82,7 +82,8 @@ def run():
                 # FIX 2: Campi Interi
                 # Nello screenshot si vedono valori come '1.0' per le lampade, quindi usiamo clean_int
                 arm_numero_lampade = clean_int(row.get('arm_numero_lampade'), default=1),
-                
+
+                giorni_guasto = clean_int(row.get('giorni_guasto'), default=0),
                 # FIX 3: Corretto il typo 'lap' -> 'lmp' nel 'get'
                 # Se nel CSV la colonna è diversa, questo eviterà il crash ma metterà 0
                 arm_lmp_potenza_nominale = clean_int(row.get('arm_lmp_potenza_nominale', row.get('arm_lap_potenza_nominale')), default=0),

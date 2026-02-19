@@ -84,12 +84,27 @@
         /* Container per il grafico per controllarne le dimensioni */
         .chart-wrapper {
             position: relative;
-            height: 60vh; /* Occupa il 60% dell'altezza dello schermo */
+            height: 60vh;
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
         }
+
+        /* Wrapper più basso per il secondo grafico */
+        .chart-wrapper-sm {
+            position: relative;
+            height: 45vh;
+            width: 100%;
+        }
+
+        .section-title {
+            font-weight: 800;
+            letter-spacing: .5px;
+            margin: 0 0 12px 0;
+            text-align: center;
+        }
+        .section-title span { color: var(--accent); }
     </style>
 </head>
 <body>
@@ -103,9 +118,11 @@
     <h1 class="header-title">Analisi <span style="color: var(--accent)">Guasti</span></h1>
     <p class="header-subtitle">Distribuzione delle tipologie di intervento tecnico</p>
 
-    <div class="row justify-content-center">
+    <div class="row justify-content-center g-4">
+        <!-- CARD 1: Doughnut -->
         <div class="col-lg-10">
             <div class="card-custom">
+                <h3 class="section-title">Guasti per <span>Categoria</span></h3>
                 <div class="chart-wrapper">
                     <canvas id="guastiChart"></canvas>
                 </div>
@@ -117,23 +134,42 @@
                 </div>
             </div>
         </div>
+
+        <!-- CARD 2: Bar -->
+        <div class="col-lg-10">
+            <div class="card-custom">
+                <h3 class="section-title">Interventi per <span>Tipologia</span></h3>
+                <div class="chart-wrapper-sm">
+                    <canvas id="interventoChart"></canvas>
+                </div>
+                <div class="text-center mt-3">
+                    <small style="color: var(--text-main);">
+                        💡 Confronto rapido tra le prime 5 tipologie di intervento.
+                    </small>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 {{ chart_labels|json_script:"dati-etichette" }}
 {{ chart_data|json_script:"dati-valori" }}
+{{ chart_Intervento|json_script:"dati-valori-intervento" }}
+{{ chart_Intervento_data|json_script:"dati-valori-intervento-data" }}
+{{ chart_Intervento_media|json_script:"dati-secondo-valore" }}
 
 <script>
     try {
+        // ====== GRAFICO 1 (Doughnut) ======
         const labels = JSON.parse(document.getElementById('dati-etichette').textContent);
         const data = JSON.parse(document.getElementById('dati-valori').textContent);
 
         if (labels.length === 0) {
-            console.warn("Nessun dato trovato per il grafico.");
+            console.warn("Nessun dato trovato per il grafico (guasti).");
         }
 
         const ctx = document.getElementById('guastiChart').getContext('2d');
-        
+
         new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -156,58 +192,103 @@
                     if (activeElements.length > 0) {
                         const index = activeElements[0].index;
                         const label = labels[index];
-                        
+
                         if (label.includes("Altro")) return;
 
-                        // encodeURIComponent è fondamentale per i caratteri '/'
                         const encodedLabel = encodeURIComponent(label);
                         window.location.href = "/dettaglio-guasto/" + encodedLabel + "/";
                     }
                 }
             }
         });
+
+        // ====== GRAFICO 2 (Bar) ======
+        const intLabels = JSON.parse(document.getElementById('dati-valori-intervento').textContent);
+        const intData = JSON.parse(document.getElementById('dati-valori-intervento-data').textContent);
+        const secondoValore = JSON.parse(document.getElementById('dati-secondo-valore').textContent);
+
+
+        if (!Array.isArray(intLabels) || !Array.isArray(intData) || intLabels.length === 0) {
+            console.warn("Nessun dato trovato per il grafico (interventi).");
+        }
+
+        const ctx2 = document.getElementById('interventoChart').getContext('2d');
+
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: intLabels,
+                datasets: [{
+                    label: 'Numero interventi',
+                    data: intData,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const i = context.dataIndex;
+
+                                const primo = context.raw; // numero interventi
+                                const secondo = secondoValore[i]; // altro dato
+
+                                return [
+                                    "Interventi: " + primo,
+                                    "Altro dato: " + secondo
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+
+        });
+
     } catch (error) {
-        console.error("Errore nel caricamento del grafico:", error);
+        console.error("Errore nel caricamento dei grafici:", error);
     }
 </script>
+
 <a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
     <span class="material-icons">home</span>
 </a>
 
 <style>
-    /* Stile per il bottone flottante */
     .btn-home-floating {
         position: fixed;
         bottom: 30px;
         right: 30px;
         width: 60px;
         height: 60px;
-        background-color: rgba(15, 23, 42, 0.9); /* Sfondo scuro semitrasparente */
-        border: 2px solid #00f2ff; /* Bordo Neon */
-        border-radius: 50%; /* Cerchio perfetto */
+        background-color: rgba(15, 23, 42, 0.9);
+        border: 2px solid #00f2ff;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #00f2ff;
-        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); /* Alone luminoso */
-        z-index: 9999; /* Sta sopra a tutto, anche alla mappa */
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effetto rimbalzo */
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        z-index: 9999;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         text-decoration: none;
     }
 
-    /* Effetto Hover (quando ci passi sopra) */
     .btn-home-floating:hover {
-        transform: scale(1.1) rotate(-10deg); /* Si ingrandisce e ruota leggermente */
-        background-color: #00f2ff; /* Diventa pieno */
-        color: #0f172a; /* Icona scura */
-        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* Super luce */
+        transform: scale(1.1) rotate(-10deg);
+        background-color: #00f2ff;
+        color: #0f172a;
+        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8);
     }
 
     .btn-home-floating .material-icons {
-        font-size: 32px; /* Icona grande */
+        font-size: 32px;
     }
 
-    /* Adattamento Mobile: su schermi piccoli lo spostiamo un po' */
     @media (max-width: 768px) {
         .btn-home-floating {
             bottom: 20px;
@@ -220,6 +301,6 @@
         }
     }
 </style>
+
 </body>
 </html>
-

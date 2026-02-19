@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Count, Avg, F, ExpressionWrapper, DurationField
 from .models import LampioneNuovo, LampioneManutenzione
 from django.core.paginator import Paginator
 from django.shortcuts import render
@@ -77,6 +77,9 @@ def mappa_lampioni(request):
     m = m._repr_html_()
     return render(request, 'core/mappa.html', {'mappa': m})
 
+from django.db.models.functions import Lag
+from django.db.models.expressions import Window
+
 def dashboard(request):
     # 1. Ottieni tutti i dati raggruppati
     query = (
@@ -87,7 +90,21 @@ def dashboard(request):
         .exclude(tcs_descr__isnull=True)
         .exclude(tcs_descr='') # Escludi anche le stringhe vuote
     )
+    query_manutenzione = (
+    LampioneManutenzione.objects
+        .values('tci_id', 'tci_descr')
+        .annotate(
+            numero_utilizzi=Count('id'),
+            media=Avg('giorni_guasto'),
+        )
+        .order_by('-numero_utilizzi')
+        .exclude(tci_id__isnull=True)
+        .exclude(tci_id=0)
+        .exclude(tci_descr__isnull=True)
+        .exclude(tci_descr='')
+    )
 
+    query_manutenzione=query_manutenzione[:5]
     # DEBUG: Stampa nella console di VS Code (quella nera dove gira il server)
     # per vedere se il database risponde
     print(f"DEBUG: Trovati {query.count()} gruppi di guasti.")
@@ -112,7 +129,12 @@ def dashboard(request):
     context = {
         'chart_labels': labels,
         'chart_data': data,
+        'chart_Intervento': [item['tci_descr'] for item in query_manutenzione],
+        'chart_Intervento_data': [item['numero_utilizzi'] for item in query_manutenzione],
+        'chart_Intervento_media': [int(item['media']) for item in query_manutenzione],
+
     }
+    print(query_manutenzione)
     return render(request, 'core/dashboard.html', context)
 
 def dettaglio_guasto(request, motivo_guasto):
