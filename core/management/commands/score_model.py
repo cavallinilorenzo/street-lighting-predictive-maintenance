@@ -80,8 +80,13 @@ class Command(BaseCommand):
             how="inner"
         )
         #merged.loc[merged["pred_giorni_residui"] > 10000, "pred_giorni_residui"] = -1
-        merged.loc[merged["risk_score"] > 0.9, "pred_giorni_residui"] = random.randint(0, 25)
+        merged.loc[merged["risk_score"] > 0.9, "pred_giorni_residui"] = random.randint(0, 30)
         
+        merged.loc[(merged["risk_score"] > 0.7) & (merged["risk_score"] <= 0.9), "pred_giorni_residui"] = random.randint(30, 150)
+
+        merged.loc[(merged["risk_score"] <= 0.2) & (merged["risk_score"] > 0.1), "pred_giorni_residui"] = random.randint(360, 1800)
+
+        merged.loc[merged["risk_score"] <= 0.1, "pred_giorni_residui"] = random.randint(700, 2000)
         merged=merged.set_index('arm_id')['pred_giorni_residui'].to_dict()
         
         # Prendiamo dal DB solo i lampioni che esistono nel CSV
