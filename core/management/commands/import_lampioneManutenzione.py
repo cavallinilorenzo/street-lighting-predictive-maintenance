@@ -6,7 +6,7 @@ from core.models import LampioneManutenzione
 from django.utils import timezone
 
 class Command(BaseCommand):
-    help = 'Svuota la tabella e importa lo storico manutenzioni da CSV includendo TUTTI I CAMPI'
+    help = 'Svuota la tabella e importa lo storico manutenzioni, scartando SOLO arm_data_ini == 01/01/2018'
 
     def handle(self, *args, **options):
         # --- PARAMETRI ---
@@ -33,6 +33,18 @@ class Command(BaseCommand):
             df['arm_data_ini'] = pd.to_datetime(df['arm_data_ini'], format='%d/%m/%Y', errors='coerce')
         if 'arm_data_fin' in df.columns:
             df['arm_data_fin'] = pd.to_datetime(df['arm_data_fin'], format='%d/%m/%Y', errors='coerce')
+
+        # --- FILTRO SULLA DATA (CORRETTO) ---
+        righe_totali_iniziali = len(df)
+        data_limite = pd.to_datetime('2018-01-01')
+        
+        # Scartiamo SOLO le righe in cui arm_data_ini è ESATTAMENTE uguale al 01/01/2018
+        condizione_da_scartare = df['arm_data_ini'] == data_limite
+        df = df[~condizione_da_scartare]
+        
+        righe_scartate = righe_totali_iniziali - len(df)
+        self.stdout.write(self.style.NOTICE(f"  -> FILTRO APPLICATO: Scartate {righe_scartate} righe con arm_data_ini == 01/01/2018."))
+        self.stdout.write(self.style.NOTICE(f"  -> Righe rimanenti da importare: {len(df)}."))
 
         records_to_create = []
         self.stdout.write("3. Preparazione e Inserimento dei dati completi (Bulk Create)...")
@@ -85,7 +97,7 @@ class Command(BaseCommand):
                 LampioneManutenzione.objects.bulk_create(records_to_create)
                 inseriti += len(records_to_create)
                 records_to_create = [] 
-                self.stdout.write(f"  -> Processati {index + 1} record...")
+                self.stdout.write(f"  -> Processati {inseriti} record...")
 
         # Inserimento degli ultimi record rimanenti
         if records_to_create:
