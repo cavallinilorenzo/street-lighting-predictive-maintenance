@@ -11,4 +11,5 @@ urlpatterns = [
     path('lampione/<int:pk>/', dettaglio_lampione, name='dettaglio_lampione'),
     path('asset/<int:pk>/', dettaglio_asset, name='dettaglio_asset'),
     path('dettaglio-rischio/<str:livello>/', dettaglio_rischio, name='dettaglio_rischio'),
+    path('asset/<int:pk>/pdf/', scarica_pdf_asset, name='scarica_pdf_asset'),
 ]

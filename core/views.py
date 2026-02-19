@@ -1,18 +1,28 @@
-from django.db import connection
-from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Sum, Avg, F, ExpressionWrapper, DurationField
-from .models import LampioneNuovo, LampioneManutenzione
-from django.core.paginator import Paginator
-import folium
-from folium.plugins import MarkerCluster
+import io
 import random
-from django.urls import reverse
 from datetime import datetime, timedelta
 
+from django.db import connection
+from django.shortcuts import render, get_object_or_404
+from django.db.models import Count
+from django.core.paginator import Paginator
+from django.urls import reverse
+from django.http import FileResponse
+
+import folium
+from folium.plugins import MarkerCluster
+
+# Librerie per il PDF
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+from .models import LampioneNuovo, LampioneManutenzione
+
 def index(request):
-    # Prendiamo i 5 lampioni con il rischio più alto (escludendo quelli non ancora calcolati)
     top_critici = LampioneNuovo.objects.filter(risk_score__isnull=False).order_by('-risk_score')[:5]
-    
     return render(request, 'core/index.html', {'top_critici': top_critici})
 
 
@@ -24,7 +34,6 @@ def mappa_lampioni(request):
     marker_cluster = MarkerCluster().add_to(m)
 
     for lampione in lampioni:
-        # --- 1. VERA PREDITTIVA AI DAL DATABASE ---
         if getattr(lampione, 'risk_score', None) is not None:
             if lampione.risk_score > 0.70:
                 colore_icona = "red"
@@ -36,7 +45,6 @@ def mappa_lampioni(request):
                 colore_icona = "green"
                 stato_salute = "OTTIMO"
             
-            # Usiamo round() per essere allineati con il tag widthratio di Django
             rischio_perc = f"{round(lampione.risk_score * 100)}%"
         else:
             colore_icona = "lightgray"
@@ -92,7 +100,7 @@ def dashboard(request):
         .exclude(tci_id=0)
         .exclude(tci_descr__isnull=True)
         .exclude(tci_descr='')
-    )[:5] # <--- Puoi cambiare questo in 10 se vuoi mostrare più dati nel grafico
+    )[:5] 
 
     labels = []
     data = []
@@ -107,7 +115,6 @@ def dashboard(request):
         labels.append('Altro (Guasti minori)')
         data.append(altri_count)
 
-    # NUOVO: Calcolo dati per il grafico a torta AI basato sulle nuove soglie
     tot_critico = LampioneNuovo.objects.filter(risk_score__gt=0.70).count()
     tot_attenzione = LampioneNuovo.objects.filter(risk_score__gte=0.25, risk_score__lte=0.70).count()
     tot_ottimo = LampioneNuovo.objects.filter(risk_score__lt=0.25).count()
@@ -172,7 +179,6 @@ def dettaglio_lampione(request, pk):
 
 
 def dettaglio_asset(request, pk):
-    # SQL: Probabilità basate sui guasti simili passati
     sql = """WITH base AS (
       SELECT
         COALESCE(NULLIF(TRIM(tcs_descr), ''), 'Senza categoria') AS tcs_descr
@@ -201,28 +207,23 @@ def dettaglio_asset(request, pk):
         cursor.execute(sql, [lampione.arm_lmp_potenza_nominale, lampione.arm_altezza])
         rows = cursor.fetchall()
     
-    rows = rows[:5]
-    
-    # Calcolo dell'età reale dell'armatura in anni
+    # Raccogliamo comunque tutti i dati dalla query, ma il frontend ne mostrerà solo 1
     eta_anni = 0
     if lampione.arm_data_ini:
         try:
             eta_giorni = (datetime.now().date() - lampione.arm_data_ini).days
             eta_anni = eta_giorni // 365
         except TypeError:
-            # Nel caso in cui il database restituisca una stringa (SQLite)
             data_ini_parsed = datetime.strptime(str(lampione.arm_data_ini), '%Y-%m-%d').date()
             eta_giorni = (datetime.now().date() - data_ini_parsed).days
             eta_anni = eta_giorni // 365
 
-    # --- EXPLAINABLE AI LOGIC E PREDITTIVA REALE ---
     if getattr(lampione, 'risk_score', None) is not None:
+        giorni_rimanenti = getattr(lampione, 'traQuantoSiRompe', "N/D")
+        
         if lampione.risk_score > 0.70:
-            giorni_rimanenti = random.randint(1, 15) 
             stato = "CRITICO"
             colore_stato = "#ef4444" 
-            
-            # Motivazioni ROSSO
             if eta_anni > 5:
                 motivazione = f"Forte usura temporale: l'asset è in funzione da oltre {eta_anni} anni, superando la vita utile media stimata."
             elif lampione.arm_lmp_potenza_nominale and lampione.arm_lmp_potenza_nominale > 70:
@@ -231,39 +232,36 @@ def dettaglio_asset(request, pk):
                 motivazione = "Il modello ha riscontrato un'alta incidenza di guasti storici per questa specifica combinazione di hardware."
                 
         elif lampione.risk_score >= 0.25:
-            giorni_rimanenti = random.randint(16, 60)
             stato = "ATTENZIONE"
             colore_stato = "#f59e0b"
-            
-            # Motivazioni ARANCIONE
             if eta_anni > 3:
                 motivazione = f"L'asset è in servizio da circa {eta_anni} anni. Si consiglia un monitoraggio per normale decadimento fisiologico."
             else:
                 motivazione = "Rilevata una vulnerabilità statistica media per questa classe di armature, indipendente dall'età."
                 
         else:
-            giorni_rimanenti = random.randint(61, 365)
             stato = "OTTIMO"
             colore_stato = "#10b981"
-            
-            # Motivazioni VERDE
             if eta_anni < 2:
                 motivazione = "Installazione recente. Bassissima probabilità di usura fisica o guasti a breve termine."
             else:
                 motivazione = "L'hardware si sta dimostrando estremamente affidabile nel tempo rispetto alla media dell'impianto."
     else:
-        # Assenza di punteggio AI
-        giorni_rimanenti = 365
+        giorni_rimanenti = "N/D"
         stato = "SCONOSCIUTO"
         colore_stato = "#6c757d"
         motivazione = "In attesa della prima elaborazione dati da parte dell'Intelligenza Artificiale."
             
     messaggio = "Previsione basata sull'intelligenza artificiale."
-    data_rottura = datetime.now().date() + timedelta(days=giorni_rimanenti)
+    
+    try:
+        data_rottura = datetime.now().date() + timedelta(days=int(giorni_rimanenti))
+    except (ValueError, TypeError):
+        data_rottura = "N/D"
 
-    # Creazione della mappa di Folium
+    # Mappa Folium 100%
     if lampione.latitudine and lampione.longitudine:
-        m = folium.Map(location=[lampione.latitudine, lampione.longitudine], zoom_start=19, tiles="cartodbpositron")
+        m = folium.Map(location=[lampione.latitudine, lampione.longitudine], zoom_start=19, tiles="cartodbpositron", width='100%', height='100%')
         folium.Marker(
             [lampione.latitudine, lampione.longitudine], 
             tooltip="Posizione Asset",
@@ -292,7 +290,7 @@ def dettaglio_asset(request, pk):
         context["guasti_simili"].append({
             "tipoGuasto": row[0],
             "probGuasto": round(row[1]*100, 2),
-            "giorniRimasti": "N/D" 
+            "giorniRimasti": giorni_rimanenti 
         })
         
     return render(request, 'core/lampione_asset.html', context)
@@ -333,3 +331,111 @@ def dettaglio_rischio(request, livello):
         'livello': livello
     }
     return render(request, 'core/dettaglio.html', context)
+
+
+def scarica_pdf_asset(request, pk):
+    lampione = get_object_or_404(LampioneNuovo, pk=pk)
+    
+    eta_anni = 0
+    if lampione.arm_data_ini:
+        try:
+            eta_giorni = (datetime.now().date() - lampione.arm_data_ini).days
+            eta_anni = eta_giorni // 365
+        except TypeError:
+            data_ini_parsed = datetime.strptime(str(lampione.arm_data_ini), '%Y-%m-%d').date()
+            eta_giorni = (datetime.now().date() - data_ini_parsed).days
+            eta_anni = eta_giorni // 365
+
+    motivazione = "In attesa della prima elaborazione dati da parte dell'Intelligenza Artificiale."
+    if getattr(lampione, 'risk_score', None) is not None:
+        if lampione.risk_score > 0.70:
+            if eta_anni > 5:
+                motivazione = f"Forte usura temporale: l'asset è in funzione da oltre {eta_anni} anni, superando la vita utile media stimata."
+            elif lampione.arm_lmp_potenza_nominale and lampione.arm_lmp_potenza_nominale > 70:
+                motivazione = f"Stress termico/elettrico: l'elevata potenza ({lampione.arm_lmp_potenza_nominale}W) ha storicamente un alto tasso di guasto per questo modello."
+            else:
+                motivazione = "Il modello ha riscontrato un'alta incidenza di guasti storici per questa specifica combinazione di hardware."
+        elif lampione.risk_score >= 0.25:
+            if eta_anni > 3:
+                motivazione = f"L'asset è in servizio da circa {eta_anni} anni. Si consiglia un monitoraggio per normale decadimento fisiologico."
+            else:
+                motivazione = "Rilevata una vulnerabilità statistica media per questa classe di armature, indipendente dall'età."
+        else:
+            if eta_anni < 2:
+                motivazione = "Installazione recente. Bassissima probabilità di usura fisica o guasti a breve termine."
+            else:
+                motivazione = "L'hardware si sta dimostrando estremamente affidabile nel tempo rispetto alla media dell'impianto."
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        name='TitleStyle', parent=styles['Heading1'],
+        textColor=colors.HexColor('#0f172a'), spaceAfter=20
+    )
+    subtitle_style = ParagraphStyle(
+        name='SubTitle', parent=styles['Heading2'],
+        textColor=colors.HexColor('#00f2ff'), spaceAfter=10
+    )
+    testo_normale = styles['Normal']
+    
+    elements.append(Paragraph(f"Report Tecnico di Manutenzione Predittiva", title_style))
+    elements.append(Paragraph(f"<b>ID Asset:</b> #{lampione.arm_id}", testo_normale))
+    elements.append(Paragraph(f"<b>Data Estrazione:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}", testo_normale))
+    elements.append(Spacer(1, 20))
+    
+    if lampione.latitudine and lampione.longitudine:
+        gmaps_url = f"https://www.google.com/maps/search/?api=1&query={lampione.latitudine},{lampione.longitudine}"
+        testo_coords = f"Apri in Google Maps ({lampione.latitudine}, {lampione.longitudine})"
+    else:
+        gmaps_url = None
+        testo_coords = "Coordinate non disponibili"
+
+    elements.append(Paragraph("Specifiche Hardware", subtitle_style))
+    data_tecnici = [
+        ['Altezza Armatura', f"{lampione.arm_altezza} m" if lampione.arm_altezza else "N/D"],
+        ['Potenza Nominale', f"{lampione.arm_lmp_potenza_nominale} W" if lampione.arm_lmp_potenza_nominale else "N/D"],
+        ['Modello/Tipologia', f"{lampione.tpo_descr}" if lampione.tpo_descr else "N/D"],
+        ['Geolocalizzazione', Paragraph(f'<a href="{gmaps_url}" color="blue">{testo_coords}</a>', testo_normale)]
+    ]
+    t = Table(data_tecnici, colWidths=[150, 300])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#e2e8f0')),
+        ('TEXTCOLOR', (0,0), (-1,-1), colors.black),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('PADDING', (0,0), (-1,-1), 8),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 20))
+    
+    elements.append(Paragraph("Analisi Predittiva (Machine Learning)", subtitle_style))
+    risk_perc = f"{round(lampione.risk_score * 100)}%" if lampione.risk_score else "N/D"
+    giorni = getattr(lampione, 'traQuantoSiRompe', "N/D")
+    
+    data_ml = [
+        ['Rischio Sostituzione (60gg)', risk_perc],
+        ['Giorni Stimati alla Rottura', f"{giorni} gg" if giorni != "N/D" else "N/D"],
+        ['Ultimo Check Algoritmo', lampione.risk_score_date.strftime("%d/%m/%Y %H:%M") if lampione.risk_score_date else "Mai elaborato"]
+    ]
+    t2 = Table(data_ml, colWidths=[200, 250])
+    t2.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#00f2ff')),
+        ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#0f172a')),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('GRID', (0,0), (-1,-1), 1, colors.HexColor('#cbd5e1')),
+        ('PADDING', (0,0), (-1,-1), 8),
+    ]))
+    elements.append(t2)
+    elements.append(Spacer(1, 15))
+    
+    elements.append(Paragraph("<b>Logica Decisionale (Explainable AI):</b>", testo_normale))
+    elements.append(Spacer(1, 5))
+    elements.append(Paragraph(motivazione, testo_normale))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f"Report_Asset_{lampione.arm_id}.pdf")

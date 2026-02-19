@@ -24,6 +24,7 @@
         }
         .header-title { font-weight: 800; letter-spacing: -1px; margin-bottom: 2rem; }
         
+        /* Card Base Setup */
         .card-custom {
             background: var(--card-bg);
             border-radius: 20px;
@@ -31,6 +32,8 @@
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         
         /* Card Predittiva AI */
@@ -39,6 +42,7 @@
             background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
             position: relative;
             overflow: hidden;
+            display: block; 
         }
         .ai-card::before {
             content: '';
@@ -47,8 +51,8 @@
             background: var(--ai-color, #00f2ff);
             box-shadow: 0 0 15px var(--ai-color, #00f2ff);
         }
-        .stat-value { font-size: 2.5rem; font-weight: 800; color: #fff; }
-        .stat-label { text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; color: #94a3b8; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1; margin-top: 5px;}
+        .stat-label { text-transform: uppercase; font-size: 0.7rem; letter-spacing: 1px; color: #94a3b8; }
         
         .back-link { 
             color: #94a3b8; text-decoration: none; font-weight: 600; 
@@ -57,12 +61,63 @@
         }
         .back-link:hover { color: var(--accent); }
 
-        /* Mappa */
-        .map-wrapper {
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-            height: 300px;
+        /* Mappa: riempie il riquadro e resta responsive */
+        .map-wrapper{
+        border-radius: 15px;
+        overflow: hidden;
+        border: 0;                 /* niente bordi */
+        width: 100%;
+        background-color: rgba(0,0,0,0.2);
+
+        /* cresce nel card (che è già flex) e resta responsive */
+        flex: 1 1 auto;
+        min-height: clamp(220px, 35vh, 520px);
+        }
+
+        /* Qualunque embed (Folium div o iframe) deve riempire il wrapper */
+        .map-wrapper > iframe,
+        .map-wrapper > div,
+        .map-wrapper .folium-map,
+        .map-wrapper .leaflet-container{
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        }
+        
+        /* Folium _repr_html_: elimina il wrapper con padding-bottom (aspect ratio) */
+        .map-wrapper > div{
+        height: 100% !important;
+        }
+
+        .map-wrapper > div > div{
+        height: 100% !important;
+        padding-bottom: 0 !important;   /* <-- toglie il 60% */
+        }
+
+        /* Fai riempire davvero il riquadro all'iframe */
+        .map-wrapper iframe{
+        position: absolute !important;
+        inset: 0 !important;            /* top/right/bottom/left = 0 */
+        width: 100% !important;
+        height: 100% !important;
+        border: 0 !important;
+        display: block;
+        }
+
+
+        /* Stili Tabella Dettagliata */
+        .table-dettaglio td {
+            background: transparent;
+            color: #f8fafc;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 12px 5px;
+        }
+        .table-dettaglio td.label-col {
+            color: #94a3b8;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -79,14 +134,10 @@
     </a>
 
     <script>
-        // Questo script viene eseguito appena la pagina si carica
         document.addEventListener("DOMContentLoaded", function() {
-            // Se la pagina è stata aperta in una nuova scheda (window.opener) 
-            // o se non ha una cronologia alle spalle (history <= 1)
             if (window.opener || window.history.length <= 1) {
                 document.getElementById('btn-close').style.display = 'inline-flex';
             } else {
-                // Se è stata aperta navigando normalmente (es. dalla tabella)
                 document.getElementById('btn-back').style.display = 'inline-flex';
             }
         });
@@ -145,16 +196,29 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4 text-center border-start border-secondary">
-                        <div class="stat-label">Rischio Sostituzione (60 gg)</div>
-                        <div class="stat-value" style="color: var(--ai-color);">
-                            {% if lampione.risk_score != None %}
-                                {% widthratio lampione.risk_score 1 100 %}%
-                            {% else %}
-                                N/D
-                            {% endif %}
+                    <div class="col-md-4 text-center border-start border-secondary py-2">
+                        <div class="row">
+                            <div class="col-6 border-end border-secondary">
+                                <div class="stat-label">Rischio</div>
+                                <div class="stat-value" style="color: var(--ai-color);">
+                                    {% if lampione.risk_score != None %}
+                                        {% widthratio lampione.risk_score 1 100 %}%
+                                    {% else %}
+                                        N/D
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-label">Stima Rottura</div>
+                                <div class="stat-value" style="color: var(--ai-color);">
+                                    {% if ai_data.giorni != "N/D" %}
+                                        {{ ai_data.giorni }}<span style="font-size: 1rem;">gg</span>
+                                    {% else %}
+                                        N/D
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                        <small>Ultimo calcolo ML: {{ lampione.risk_score_date|date:"d/m/Y H:i"|default:"Mai" }}</small>
                     </div>
                 </div>
             </div>
@@ -162,71 +226,81 @@
     </div>
 
     <div class="row g-4">
+        
         <div class="col-lg-6">
             <div class="card-custom">
                 <h5 class="mb-3"><span class="material-icons" style="vertical-align:bottom; color: var(--accent)">place</span> Geolocalizzazione</h5>
+                
                 {% if mappa %}
-                    <div class="map-wrapper">
+                    <div class="map-wrapper mb-3">
                         {{ mappa|safe }}
                     </div>
-                    <div class="mt-3 d-flex justify-content-between text-muted small">
+                    <div class="mt-auto d-flex justify-content-between small" style="color: #94a3b8; font-weight: 600;">
                         <span>Lat: {{ lampione.latitudine }}</span>
                         <span>Lon: {{ lampione.longitudine }}</span>
                     </div>
                 {% else %}
-                    <div class="alert alert-dark text-center">Coordinate non disponibili</div>
+                    <div class="alert alert-dark text-center h-100 d-flex align-items-center justify-content-center">Coordinate non disponibili</div>
                 {% endif %}
             </div>
         </div>
 
         <div class="col-lg-6">
             <div class="card-custom">
-                <h5 class="mb-3"><span class="material-icons" style="vertical-align:bottom; color: var(--accent)">memory</span> Scheda Tecnica</h5>
-                <table class="table table-dark table-borderless">
+                <h5 class="mb-4"><span class="material-icons" style="vertical-align:bottom; color: var(--accent)">memory</span> Scheda Tecnica Dettagliata</h5>
+                
+                <table class="table table-borderless table-dettaglio mb-4">
                     <tbody>
                         <tr>
-                            <td>ID Univoco</td>
+                            <td class="label-col">ID Univoco Asset</td>
                             <td class="text-end fw-bold">{{ lampione.arm_id }}</td>
                         </tr>
                         <tr>
-                            <td>Modello (Table)</td>
-                            <td class="text-end">LampioneNuovo</td>
+                            <td class="label-col">Modello Armatura</td>
+                            <td class="text-end fw-bold">{{ lampione.tpo_descr|default:"N/D" }}</td>
                         </tr>
                         <tr>
-                            <td>Ultimo check</td>
-                            <td class="text-end">{% now "d/m/Y" %}</td> 
+                            <td class="label-col">Potenza Nominale</td>
+                            <td class="text-end fw-bold" style="color: var(--accent);">{{ lampione.arm_lmp_potenza_nominale|default:"N/D" }} W</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">Altezza</td>
+                            <td class="text-end fw-bold">{{ lampione.arm_altezza|default:"N/D" }} m</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">Lunghezza Sbraccio</td>
+                            <td class="text-end fw-bold">{{ lampione.arm_lunghezza_sbraccio|default:"N/D" }} m</td>
+                        </tr>
+                        <tr>
+                            <td class="label-col">Data Installazione</td>
+                            <td class="text-end fw-bold">{{ lampione.arm_data_ini|date:"d/m/Y"|default:"N/D" }}</td>
                         </tr>
                     </tbody>
                 </table>
                 
-                <h5 class="mb-3 mt-4"><span class="material-icons" style="vertical-align:bottom; color: var(--accent)">warning</span> Top {{nGuasti}} cause di guasto probabili</h5>
-                <p class="small text-muted mb-2">Basato su armature con la stessa altezza e potenza.</p>
-
-                <table class="table table-dark table-borderless">
-                    <thead style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8; font-size: 0.85rem;">
-                        <tr>
-                            <th>Causa</th>
-                            <th class="text-end">Probabilità</th>
-                            <th class="text-end">Stima (Giorni)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for guasto in guasti_simili %}
-                        <tr>
-                            <td>{{guasto.tipoGuasto}}</td>
-                            <td class="text-end fw-bold">{{ guasto.probGuasto }}%</td>
-                            <td class="text-end fw-bold">{{ guasto.giorniRimasti }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <hr style="border-color: rgba(255,255,255,0.1)">
+                <div class="flex-grow-1"></div>
                 
-                <div class="text-center mt-4">
-                    <button class="btn btn-outline-light w-100 disabled" style="opacity: 0.5">
-                        Scarica Report Tecnico (PDF)
-                    </button>
-                    <small class="mt-2 d-block">Feature disponibile prossimamente</small>
+                {% if guasti_simili %}
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2 text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">Causa di guasto prevalente stimata</h6>
+                    <div class="p-3 rounded" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-white d-flex align-items-center">
+                                <span class="material-icons me-2" style="color: var(--accent); font-size: 20px;">warning_amber</span>
+                                {{ guasti_simili.0.tipoGuasto }}
+                            </span>
+                            <span class="badge" style="background-color: var(--accent); color: #0f172a; font-size: 0.9rem;">
+                                {{ guasti_simili.0.probGuasto }}%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="mt-auto text-center">
+                    <a href="{% url 'scarica_pdf_asset' lampione.pk %}" class="btn btn-outline-light w-100 py-2" style="border-color: var(--accent); color: var(--accent);">
+                        <span class="material-icons" style="vertical-align: middle;">picture_as_pdf</span> Scarica Report Tecnico
+                    </a>
                 </div>
             </div>
         </div>
@@ -239,7 +313,6 @@
 </a>
 
 <style>
-    /* Stile per il bottone flottante */
     .btn-home-floating {
         position: fixed;
         bottom: 30px;
@@ -268,18 +341,6 @@
 
     .btn-home-floating .material-icons {
         font-size: 32px;
-    }
-
-    @media (max-width: 768px) {
-        .btn-home-floating {
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-        }
-        .btn-home-floating .material-icons {
-            font-size: 24px;
-        }
     }
 </style>
 
