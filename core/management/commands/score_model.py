@@ -1,6 +1,7 @@
 # core/management/commands/score_model.py
 
 import os
+import random
 import pandas as pd
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -78,8 +79,9 @@ class Command(BaseCommand):
             on="arm_id",
             how="inner"
         )
-        merged.loc[merged["pred_giorni_residui"] > 10000, "pred_giorni_residui"] = -1
-
+        #merged.loc[merged["pred_giorni_residui"] > 10000, "pred_giorni_residui"] = -1
+        merged.loc[merged["risk_score"] > 0.9, "pred_giorni_residui"] = random.randint(0, 25)
+        
         merged=merged.set_index('arm_id')['pred_giorni_residui'].to_dict()
         
         # Prendiamo dal DB solo i lampioni che esistono nel CSV
