@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-INPUT_CSV = "lampioni_senza_2018_attivi.csv"
+INPUT_CSV = "..\\lampioni_attivi_coordinate.csv"
 OUTPUT_CSV = "datiPerPredict.csv"
 
 print("Carico dataset...")

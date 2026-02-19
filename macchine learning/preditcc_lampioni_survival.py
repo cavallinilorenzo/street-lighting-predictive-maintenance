@@ -32,24 +32,27 @@ def load_artifacts(model_dir: str = MODEL_DIR):
 
 
 def _validate_and_prepare_features(df: pd.DataFrame, feature_cols):
-    # controlla colonne
     missing = [c for c in feature_cols if c not in df.columns]
     if missing:
         raise ValueError(f"Mancano colonne richieste: {missing}")
 
     X = df[feature_cols].copy()
 
-    # conversione numerica robusta (tmo_id può essere numerico: se è stringa, il preprocessor lo gestisce via imputazione/onehot)
+    # Normalizza missing: pd.NA -> np.nan (fondamentale per sklearn)
+    X = X.replace({pd.NA: np.nan})
+
+    # Numeriche: forziamo float (vuoti -> np.nan)
     for c in ["arm_altezza", "arm_lmp_potenza_nominale", "giorni_osservati_finora"]:
-        X[c] = pd.to_numeric(X[c], errors="coerce")
+        X[c] = pd.to_numeric(X[c], errors="coerce").astype(float)
 
-    # tmo_id: proviamo a numeric, ma se resta stringa va bene uguale
-    X["tmo_id"] = pd.to_numeric(X["tmo_id"], errors="ignore")
+    # Categorica: tmo_id come stringa "normale" (no dtype pandas "string")
+    # (anche se ci sono NaN, li lasciamo: li gestisce l'imputer)
+    X["tmo_id"] = X["tmo_id"].astype(object)
 
-    # sanity: giorni_osservati_finora deve essere > 0 (altrimenti i risultati possono diventare assurdi)
-    # non blocchiamo tutto: mettiamo NaN e verrà imputato, ma stampiamo quante righe sono sospette.
-    bad_obs = (pd.to_numeric(X["giorni_osservati_finora"], errors="coerce").fillna(-1) <= 0)
+    # Conteggio righe sospette
+    bad_obs = X["giorni_osservati_finora"].isna() | (X["giorni_osservati_finora"] <= 0)
     n_bad = int(bad_obs.sum())
+
     return X, n_bad
 
 
@@ -72,7 +75,7 @@ def predict_file(input_csv: str, output_csv: str, chunksize: int = 200_000):
         out = chunk.copy()
         out["pred_giorni_al_guasto"] = pred
 
-        # opzionale: giorni residui (mai negativi)
+        # giorni residui (clip a 0)
         obs = pd.to_numeric(out["giorni_osservati_finora"], errors="coerce")
         out["pred_giorni_residui"] = (out["pred_giorni_al_guasto"] - obs).clip(lower=0)
 
@@ -84,31 +87,11 @@ def predict_file(input_csv: str, output_csv: str, chunksize: int = 200_000):
 
     if total_bad_obs > 0:
         print(
-            f"⚠️ Attenzione: {total_bad_obs} righe avevano giorni_osservati_finora <= 0 o non numerico. "
-            "Questo può peggiorare molto le predizioni. Controlla quella colonna."
+            f"⚠️ Attenzione: {total_bad_obs} righe hanno giorni_osservati_finora NaN o <= 0. "
+            "Questo può peggiorare molto le predizioni."
         )
 
     print(f"\n✅ Output salvato in: {output_csv}")
-
-
-def predict_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """Utility se vuoi usare direttamente un DataFrame invece del file."""
-    preprocessor, booster, meta = load_artifacts()
-    feature_cols = meta["feature_cols"]
-
-    X, n_bad = _validate_and_prepare_features(df, feature_cols)
-    if n_bad > 0:
-        print(f"⚠️ {n_bad} righe con giorni_osservati_finora <= 0 o non numerico")
-
-    X_t = preprocessor.transform(X)
-    dmat = xgb.DMatrix(X_t)
-    pred = booster.predict(dmat)
-
-    out = df.copy()
-    out["pred_giorni_al_guasto"] = pred
-    obs = pd.to_numeric(out["giorni_osservati_finora"], errors="coerce")
-    out["pred_giorni_residui"] = (out["pred_giorni_al_guasto"] - obs).clip(lower=0)
-    return out
 
 
 if __name__ == "__main__":

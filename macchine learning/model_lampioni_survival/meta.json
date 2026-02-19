@@ -1,0 +1,12 @@
+{
+  "feature_cols": [
+    "arm_altezza",
+    "arm_lmp_potenza_nominale",
+    "tmo_id",
+    "giorni_osservati_finora"
+  ],
+  "target_col": "giorni_guasto",
+  "objective": "survival:aft",
+  "notes": "censored rows: lower=giorni_osservati_finora, upper=inf; failures: lower=upper=giorni_guasto",
+  "xgboost_version": "3.2.0"
+}
