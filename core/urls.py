@@ -10,4 +10,5 @@ urlpatterns = [
     path('dettaglio-guasto/<path:motivo_guasto>/', dettaglio_guasto, name='dettaglio_guasto'),
     path('lampione/<int:pk>/', dettaglio_lampione, name='dettaglio_lampione'),
     path('asset/<int:pk>/', dettaglio_asset, name='dettaglio_asset'),
+    path('dettaglio-rischio/<str:livello>/', dettaglio_rischio, name='dettaglio_rischio'),
 ]

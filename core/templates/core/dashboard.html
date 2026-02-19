@@ -60,7 +60,6 @@
             backdrop-filter: blur(10px);
         }
 
-        /* Pulsante Back stilizzato */
         .btn-neon {
             border: 1px solid var(--accent);
             color: var(--accent);
@@ -81,7 +80,6 @@
             transform: translateY(-2px);
         }
 
-        /* Container per il grafico per controllarne le dimensioni */
         .chart-wrapper {
             position: relative;
             height: 60vh;
@@ -91,7 +89,6 @@
             align-items: center;
         }
 
-        /* Wrapper più basso per il secondo grafico */
         .chart-wrapper-sm {
             position: relative;
             height: 45vh;
@@ -116,10 +113,24 @@
     </div>
 
     <h1 class="header-title">Analisi <span style="color: var(--accent)">Guasti</span></h1>
-    <p class="header-subtitle">Distribuzione delle tipologie di intervento tecnico</p>
+    <p class="header-subtitle">Statistiche e previsioni AI sulle armature</p>
 
     <div class="row justify-content-center g-4">
-        <!-- CARD 1: Doughnut -->
+        
+        <div class="col-lg-10">
+            <div class="card-custom">
+                <h3 class="section-title">Distribuzione Rischio <span>AI</span></h3>
+                <div class="chart-wrapper-sm">
+                    <canvas id="riskChart"></canvas>
+                </div>
+                <div class="text-center mt-3">
+                    <small style="color: var(--text-main);">
+                        💡 <strong>Clicca</strong> su una fetta per vedere la lista delle armature interessate.
+                    </small>
+                </div>
+            </div>
+        </div>
+
         <div class="col-lg-10">
             <div class="card-custom">
                 <h3 class="section-title">Guasti per <span>Categoria</span></h3>
@@ -128,14 +139,12 @@
                 </div>
                 <div class="text-center mt-3">
                     <small style="color: var(--text-main);">
-                        💡 Passa il mouse sulle sezioni per i dettagli. 
-                        <strong>Clicca</strong> per vedere la lista dei lampioni.
+                        💡 <strong>Clicca</strong> per vedere la lista dei lampioni storici.
                     </small>
                 </div>
             </div>
         </div>
 
-        <!-- CARD 2: Bar -->
         <div class="col-lg-10">
             <div class="card-custom">
                 <h3 class="section-title">Interventi per <span>Tipologia</span></h3>
@@ -157,97 +166,124 @@
 {{ chart_Intervento|json_script:"dati-valori-intervento" }}
 {{ chart_Intervento_data|json_script:"dati-valori-intervento-data" }}
 {{ chart_Intervento_media|json_script:"dati-secondo-valore" }}
-
-<script>
+{{ risk_data|json_script:"dati-rischio" }} <script>
     try {
-        // ====== GRAFICO 1 (Doughnut) ======
+        // ====== NUOVO GRAFICO (Rischio AI) ======
+        const riskDataText = document.getElementById('dati-rischio');
+        if (riskDataText) {
+            const riskData = JSON.parse(riskDataText.textContent);
+            const ctxRisk = document.getElementById('riskChart').getContext('2d');
+            
+            new Chart(ctxRisk, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ottimo (< 25%)', 'Attenzione (25%-70%)', 'Critico (> 70%)'],
+                    datasets: [{
+                        data: riskData,
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], // Verde, Arancione, Rosso
+                        borderColor: '#0f172a',
+                        borderWidth: 2,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            position: 'bottom',
+                            labels: { color: '#94a3b8' }
+                        }
+                    },
+                    onClick: (evt, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const categorieRischio = ['ottimo', 'attenzione', 'critico'];
+                            window.location.href = "/dettaglio-rischio/" + categorieRischio[index] + "/";
+                        }
+                    }
+                }
+            });
+        }
+
+        // ====== GRAFICO 1 (Doughnut Storico) ======
         const labels = JSON.parse(document.getElementById('dati-etichette').textContent);
         const data = JSON.parse(document.getElementById('dati-valori').textContent);
 
-        if (labels.length === 0) {
-            console.warn("Nessun dato trovato per il grafico (guasti).");
-        }
-
-        const ctx = document.getElementById('guastiChart').getContext('2d');
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: ['#00f2ff', '#ff0055', '#ffe600', '#bd00ff', '#00ff9d', '#ff9100', '#ffffff'],
-                    borderColor: '#0f172a',
-                    borderWidth: 2,
-                    hoverOffset: 15
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
+        if (labels.length > 0) {
+            const ctx = document.getElementById('guastiChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#00f2ff', '#ff0055', '#ffe600', '#bd00ff', '#00ff9d', '#ff9100', '#ffffff'],
+                        borderColor: '#0f172a',
+                        borderWidth: 2,
+                        hoverOffset: 15
+                    }]
                 },
-                onClick: (evt, activeElements) => {
-                    if (activeElements.length > 0) {
-                        const index = activeElements[0].index;
-                        const label = labels[index];
-
-                        if (label.includes("Altro")) return;
-
-                        const encodedLabel = encodeURIComponent(label);
-                        window.location.href = "/dettaglio-guasto/" + encodedLabel + "/";
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    onClick: (evt, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const label = labels[index];
+                            if (!label.includes("Altro")) {
+                                window.location.href = "/dettaglio-guasto/" + encodeURIComponent(label) + "/";
+                            }
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // ====== GRAFICO 2 (Bar) ======
         const intLabels = JSON.parse(document.getElementById('dati-valori-intervento').textContent);
         const intData = JSON.parse(document.getElementById('dati-valori-intervento-data').textContent);
         const secondoValore = JSON.parse(document.getElementById('dati-secondo-valore').textContent);
 
-
-        if (!Array.isArray(intLabels) || !Array.isArray(intData) || intLabels.length === 0) {
-            console.warn("Nessun dato trovato per il grafico (interventi).");
-        }
-
-        const ctx2 = document.getElementById('interventoChart').getContext('2d');
-
-        new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: intLabels,
-                datasets: [{
-                    label: 'Numero interventi',
-                    data: intData,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const i = context.dataIndex;
-
-                                const primo = context.raw; // numero interventi
-                                const secondo = secondoValore[i]; // altro dato
-
-                                return [
-                                    "Interventi: " + primo,
-                                    "Altro dato: " + secondo
-                                ];
+        if (intLabels.length > 0) {
+            const ctx2 = document.getElementById('interventoChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: intLabels,
+                    datasets: [{
+                        label: 'Numero interventi',
+                        data: intData,
+                        backgroundColor: '#00f2ff',
+                        borderRadius: 4,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return [
+                                        "Interventi: " + context.raw,
+                                        "Altro dato: " + secondoValore[context.dataIndex]
+                                    ];
+                                }
                             }
                         }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' } }
                     }
                 }
-            }
-
-        });
+            });
+        }
 
     } catch (error) {
         console.error("Errore nel caricamento dei grafici:", error);
@@ -290,15 +326,8 @@
     }
 
     @media (max-width: 768px) {
-        .btn-home-floating {
-            bottom: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-        }
-        .btn-home-floating .material-icons {
-            font-size: 24px;
-        }
+        .btn-home-floating { bottom: 20px; right: 20px; width: 50px; height: 50px; }
+        .btn-home-floating .material-icons { font-size: 24px; }
     }
 </style>
 
