@@ -83,6 +83,7 @@ from django.db.models.expressions import Window
 
 def dashboard(request):
     # 1. Ottieni tutti i dati raggruppati
+    print(LampioneManutenzione.objects.filter(arm_data_ini='2018-01-01'))
     query = (
         LampioneManutenzione.objects
         .values('tcs_descr')
