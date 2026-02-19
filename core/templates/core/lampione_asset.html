@@ -32,7 +32,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             height: 100%;
         }
-
         
         /* Card Predittiva AI */
         .ai-card {
@@ -54,6 +53,7 @@
         .back-link { 
             color: #94a3b8; text-decoration: none; font-weight: 600; 
             display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;
+            transition: color 0.3s ease;
         }
         .back-link:hover { color: var(--accent); }
 
@@ -70,9 +70,27 @@
 
 <div class="container mt-5">
     
-    <a href="#" onclick="window.close(); return false;" class="back-link">
+    <a href="javascript:history.back()" class="back-link" id="btn-back" style="display: none;">
+        <span class="material-icons">arrow_back</span> Torna Indietro
+    </a>
+
+    <a href="#" onclick="window.close(); return false;" class="back-link" id="btn-close" style="display: none;">
         <span class="material-icons">close</span> Chiudi
     </a>
+
+    <script>
+        // Questo script viene eseguito appena la pagina si carica
+        document.addEventListener("DOMContentLoaded", function() {
+            // Se la pagina è stata aperta in una nuova scheda (window.opener) 
+            // o se non ha una cronologia alle spalle (history <= 1)
+            if (window.opener || window.history.length <= 1) {
+                document.getElementById('btn-close').style.display = 'inline-flex';
+            } else {
+                // Se è stata aperta navigando normalmente (es. dalla tabella)
+                document.getElementById('btn-back').style.display = 'inline-flex';
+            }
+        });
+    </script>
 
     <div class="row align-items-center mb-4">
         <div class="col-md-8">
@@ -168,12 +186,22 @@
                         </tr>
                         <tr>
                             <td>Ultimo check</td>
-                            <td class="text-end">{% now "d/m/Y" %}</td> </tr>
+                            <td class="text-end">{% now "d/m/Y" %}</td> 
+                        </tr>
                     </tbody>
                 </table>
-                <h5 class="mb-3"><span class="material-icons" style="vertical-align:bottom; color: var(--accent)">memory</span> Top {{nGuasti}} segnalazione di guasto</h5>
+                
+                <h5 class="mb-3 mt-4"><span class="material-icons" style="vertical-align:bottom; color: var(--accent)">warning</span> Top {{nGuasti}} cause di guasto probabili</h5>
+                <p class="small text-muted mb-2">Basato su armature con la stessa altezza e potenza.</p>
 
                 <table class="table table-dark table-borderless">
+                    <thead style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8; font-size: 0.85rem;">
+                        <tr>
+                            <th>Causa</th>
+                            <th class="text-end">Probabilità</th>
+                            <th class="text-end">Stima (Giorni)</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for guasto in guasti_simili %}
                         <tr>
@@ -182,8 +210,6 @@
                             <td class="text-end fw-bold">{{ guasto.giorniRimasti }}</td>
                         </tr>
                         {% endfor %}
-                        
-                       
                     </tbody>
                 </table>
                 <hr style="border-color: rgba(255,255,255,0.1)">
@@ -212,32 +238,30 @@
         right: 30px;
         width: 60px;
         height: 60px;
-        background-color: rgba(15, 23, 42, 0.9); /* Sfondo scuro semitrasparente */
-        border: 2px solid #00f2ff; /* Bordo Neon */
-        border-radius: 50%; /* Cerchio perfetto */
+        background-color: rgba(15, 23, 42, 0.9);
+        border: 2px solid #00f2ff;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         color: #00f2ff;
-        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3); /* Alone luminoso */
-        z-index: 9999; /* Sta sopra a tutto, anche alla mappa */
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effetto rimbalzo */
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        z-index: 9999;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         text-decoration: none;
     }
 
-    /* Effetto Hover (quando ci passi sopra) */
     .btn-home-floating:hover {
-        transform: scale(1.1) rotate(-10deg); /* Si ingrandisce e ruota leggermente */
-        background-color: #00f2ff; /* Diventa pieno */
-        color: #0f172a; /* Icona scura */
-        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8); /* Super luce */
+        transform: scale(1.1) rotate(-10deg);
+        background-color: #00f2ff;
+        color: #0f172a;
+        box-shadow: 0 0 30px rgba(0, 242, 255, 0.8);
     }
 
     .btn-home-floating .material-icons {
-        font-size: 32px; /* Icona grande */
+        font-size: 32px;
     }
 
-    /* Adattamento Mobile: su schermi piccoli lo spostiamo un po' */
     @media (max-width: 768px) {
         .btn-home-floating {
             bottom: 20px;
