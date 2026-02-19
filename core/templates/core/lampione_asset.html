@@ -33,9 +33,10 @@
             height: 100%;
         }
 
+        
         /* Card Predittiva AI */
         .ai-card {
-            border: 1px solid {{ ai_data.colore }};
+            border: 1px solid var(--ai-color, #00f2ff);
             background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
             position: relative;
             overflow: hidden;
@@ -44,10 +45,9 @@
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 5px;
-            background: {{ ai_data.colore }};
-            box-shadow: 0 0 15px {{ ai_data.colore }};
+            background: var(--ai-color, #00f2ff);
+            box-shadow: 0 0 15px var(--ai-color, #00f2ff);
         }
-
         .stat-value { font-size: 2.5rem; font-weight: 800; color: #fff; }
         .stat-label { text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; color: #94a3b8; }
         
@@ -71,7 +71,7 @@
 <div class="container mt-5">
     
     <a href="#" onclick="window.close(); return false;" class="back-link">
-        <span class="material-icons">close</span> Chiudi e torna alla mappa
+        <span class="material-icons">close</span> Chiudi
     </a>
 
     <div class="row align-items-center mb-4">
@@ -79,27 +79,56 @@
             <h1 class="header-title">Scheda Asset <span style="color: var(--accent)">#{{ lampione.arm_id }}</span></h1>
         </div>
         <div class="col-md-4 text-end">
-            <span class="badge rounded-pill" style="background-color: {{ ai_data.colore }}; color: #000; font-size: 1rem; padding: 10px 20px;">
-                Stato: {{ ai_data.stato }}
-            </span>
+            {% if lampione.risk_score != None %}
+                <span class="badge rounded-pill text-white" 
+                      style="font-size: 1rem; padding: 10px 20px;
+                             background-color: {% if lampione.risk_score >= 0.10 %}#ef4444{% elif lampione.risk_score >= 0.04 %}#f59e0b{% else %}#10b981{% endif %};">
+                    Stato: 
+                    {% if lampione.risk_score >= 0.10 %}Critico
+                    {% elif lampione.risk_score >= 0.04 %}In Osservazione
+                    {% else %}Ottimo{% endif %}
+                </span>
+            {% else %}
+                <span class="badge rounded-pill bg-secondary text-white" style="font-size: 1rem; padding: 10px 20px;">
+                    Stato: Sconosciuto
+                </span>
+            {% endif %}
         </div>
     </div>
 
-    <div class="row mb-5">
+<div class="row mb-5">
         <div class="col-12">
-            <div class="card-custom ai-card">
+            <div class="card-custom ai-card" 
+                 style="--ai-color: {% if lampione.risk_score == None %}#6c757d{% elif lampione.risk_score >= 0.10 %}#ef4444{% elif lampione.risk_score >= 0.04 %}#f59e0b{% else %}#10b981{% endif %};">
+                
                 <div class="row align-items-center">
                     <div class="col-md-1 text-center">
-                        <span class="material-icons" style="font-size: 48px; color: {{ ai_data.colore }}">online_prediction</span>
+                        <span class="material-icons" style="font-size: 48px; color: var(--ai-color);">online_prediction</span>
                     </div>
                     <div class="col-md-7">
-                        <h4 style="color: {{ ai_data.colore }}">Analisi Predittiva AI</h4>
-                        <p class="mb-0 text-white-50">{{ ai_data.messaggio }}</p>
+                        <h4 style="color: var(--ai-color);">Analisi Predittiva AI</h4>
+                        <p class="mb-0 text-white-50">
+                            {% if lampione.risk_score == None %}
+                                Il modello ML non ha ancora analizzato questa armatura.
+                            {% elif lampione.risk_score >= 0.10 %}
+                                Attenzione: Alto rischio di guasto o fine vita lampada imminente (superati i limiti di età o usura).
+                            {% elif lampione.risk_score >= 0.04 %}
+                                Monitoraggio consigliato: rilevata instabilità recente o cicli di vita in via di esaurimento.
+                            {% else %}
+                                Asset in buone condizioni. Bassa probabilità di guasto a breve termine.
+                            {% endif %}
+                        </p>
                     </div>
                     <div class="col-md-4 text-center border-start border-secondary">
-                        <div class="stat-label">Prev. Rottura tra</div>
-                        <div class="stat-value" style="color: {{ ai_data.colore }}">{{ ai_data.giorni }} <span style="font-size: 1rem;">giorni</span></div>
-                        <small>Data stima: {{ ai_data.data_prevista|date:"d M Y" }}</small>
+                        <div class="stat-label">Rischio Sostituzione (60 gg)</div>
+                        <div class="stat-value" style="color: var(--ai-color);">
+                            {% if lampione.risk_score != None %}
+                                {% widthratio lampione.risk_score 1 100 %}%
+                            {% else %}
+                                N/D
+                            {% endif %}
+                        </div>
+                        <small>Ultimo calcolo ML: {{ lampione.risk_score_date|date:"d/m/Y H:i"|default:"Mai" }}</small>
                     </div>
                 </div>
             </div>
