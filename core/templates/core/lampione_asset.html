@@ -82,10 +82,10 @@
             {% if lampione.risk_score != None %}
                 <span class="badge rounded-pill text-white" 
                       style="font-size: 1rem; padding: 10px 20px;
-                             background-color: {% if lampione.risk_score >= 0.10 %}#ef4444{% elif lampione.risk_score >= 0.04 %}#f59e0b{% else %}#10b981{% endif %};">
+                             background-color: {% if lampione.risk_score > 0.70 %}#ef4444{% elif lampione.risk_score >= 0.25 %}#f59e0b{% else %}#10b981{% endif %};">
                     Stato: 
-                    {% if lampione.risk_score >= 0.10 %}Critico
-                    {% elif lampione.risk_score >= 0.04 %}In Osservazione
+                    {% if lampione.risk_score > 0.70 %}Critico
+                    {% elif lampione.risk_score >= 0.25 %}In Osservazione
                     {% else %}Ottimo{% endif %}
                 </span>
             {% else %}
@@ -96,10 +96,10 @@
         </div>
     </div>
 
-<div class="row mb-5">
+    <div class="row mb-5">
         <div class="col-12">
             <div class="card-custom ai-card" 
-                 style="--ai-color: {% if lampione.risk_score == None %}#6c757d{% elif lampione.risk_score >= 0.10 %}#ef4444{% elif lampione.risk_score >= 0.04 %}#f59e0b{% else %}#10b981{% endif %};">
+                 style="--ai-color: {% if lampione.risk_score == None %}#6c757d{% elif lampione.risk_score > 0.70 %}#ef4444{% elif lampione.risk_score >= 0.25 %}#f59e0b{% else %}#10b981{% endif %};">
                 
                 <div class="row align-items-center">
                     <div class="col-md-1 text-center">
@@ -110,12 +110,12 @@
                         <p class="mb-0 text-white-50">
                             {% if lampione.risk_score == None %}
                                 Il modello ML non ha ancora analizzato questa armatura.
-                            {% elif lampione.risk_score >= 0.10 %}
-                                Attenzione: Alto rischio di guasto o fine vita lampada imminente (superati i limiti di età o usura).
-                            {% elif lampione.risk_score >= 0.04 %}
-                                Monitoraggio consigliato: rilevata instabilità recente o cicli di vita in via di esaurimento.
+                            {% elif lampione.risk_score > 0.70 %}
+                                Attenzione: Rischio critico di guasto (probabilità > 70%). Pianificare ispezione.
+                            {% elif lampione.risk_score >= 0.25 %}
+                                Monitoraggio consigliato: rilevata usura o probabilità di guasto media (25% - 70%).
                             {% else %}
-                                Asset in buone condizioni. Bassa probabilità di guasto a breve termine.
+                                Asset in ottime condizioni. Bassa probabilità di guasto a breve termine (< 25%).
                             {% endif %}
                         </p>
                     </div>

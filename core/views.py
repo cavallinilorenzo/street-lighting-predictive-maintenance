@@ -23,17 +23,16 @@ def mappa_lampioni(request):
     for lampione in lampioni:
         # --- 1. VERA PREDITTIVA AI DAL DATABASE ---
         if getattr(lampione, 'risk_score', None) is not None:
-            if lampione.risk_score >= 0.10:
+            if lampione.risk_score > 0.70:
                 colore_icona = "red"
                 stato_salute = "CRITICO (Alto Rischio)"
-            elif lampione.risk_score >= 0.04:
+            elif lampione.risk_score >= 0.25:
                 colore_icona = "orange"
                 stato_salute = "ATTENZIONE"
             else:
                 colore_icona = "green"
                 stato_salute = "OTTIMO"
             
-            # Formattiamo come percentuale per leggerlo meglio (es. 0.15 -> 15%)
             rischio_perc = f"{int(lampione.risk_score * 100)}%"
         else:
             colore_icona = "lightgray"
@@ -63,64 +62,6 @@ def mappa_lampioni(request):
             location=[lampione.latitudine, lampione.longitudine],
             popup=folium.Popup(popup_html, max_width=300),
             tooltip=f"ID: {lampione.arm_id} - Rischio: {rischio_perc}",
-            icon=folium.Icon(color=colore_icona, icon="lightbulb-o", prefix="fa")
-        ).add_to(marker_cluster)
-
-    m = m._repr_html_()
-    return render(request, 'core/mappa.html', {'mappa': m})
-    # Coordinate centrali (puoi anche calcolarle come media dei punti)
-    start_coords = [41.9028, 12.4964]
-    
-    # Creazione Mappa Base (Dark mode per stile "Cyberpunk" o standard)
-    m = folium.Map(location=start_coords, zoom_start=13, tiles="cartodbpositron")
-    
-    # Ottimizzazione: prendiamo solo i campi che ci servono per non appesantire la query
-    lampioni = LampioneNuovo.objects.exclude(latitudine__isnull=True).exclude(longitudine__isnull=True)[:2500]
-    
-    marker_cluster = MarkerCluster().add_to(m)
-
-    for lampione in lampioni:
-        # --- 1. SIMULAZIONE PREDITTIVA (Placeholder) ---
-        # Qui in futuro interrogherai il tuo modello AI. 
-        # Per ora simuliamo i "giorni rimasti alla rottura".
-        giorni_alla_rottura = random.randint(1, 365) 
-        
-        # --- 2. LOGICA COLORI (SEMAFORO) ---
-        if giorni_alla_rottura < 30:
-            colore_icona = "red"
-            stato_salute = "CRITICO"
-        elif giorni_alla_rottura < 90:
-            colore_icona = "orange"
-            stato_salute = "ATTENZIONE"
-        else:
-            colore_icona = "green"
-            stato_salute = "OTTIMO"
-
-        # --- 3. CREAZIONE LINK AL DETTAGLIO ---
-        url_dettaglio = reverse('dettaglio_asset', args=[lampione.pk])
-
-        # --- 4. POPUP HTML PERSONALIZZATO ---
-        popup_html = f"""
-            <div style="font-family: sans-serif; min-width: 150px;">
-                <h4 style="margin-bottom: 5px;">Lampione #{lampione.arm_id}</h4>
-                <b style="color: gray;">Stato:</b> 
-                <span style="color:{colore_icona}; font-weight:bold;">{stato_salute}</span><br>
-                
-                <b style="color: gray;">Prev. Rottura:</b> tra {giorni_alla_rottura} gg<br>
-                <hr style="margin: 5px 0;">
-                
-                <a href="{url_dettaglio}" target="_blank" 
-                   style="display: block; text-align:center; background-color: #00f2ff; color: #000; 
-                          padding: 5px; text-decoration: none; border-radius: 4px; font-weight: bold;">
-                   Vedi Dettaglio Completo
-                </a>
-            </div>
-        """
-
-        folium.Marker(
-            location=[lampione.latitudine, lampione.longitudine],
-            popup=folium.Popup(popup_html, max_width=300),
-            tooltip=f"ID: {lampione.arm_id} ({stato_salute})",
             icon=folium.Icon(color=colore_icona, icon="lightbulb-o", prefix="fa")
         ).add_to(marker_cluster)
 
