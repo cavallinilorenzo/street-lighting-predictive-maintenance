@@ -28,11 +28,8 @@
             padding: 40px 0;
         }
 
-        .container {
-            max-width: 1200px;
-        }
+        .container { max-width: 1200px; }
 
-        /* --- Link Torna Indietro --- */
         .back-link { 
             color: var(--text-muted); 
             text-decoration: none; 
@@ -48,7 +45,6 @@
 
         h3 { font-weight: 800; letter-spacing: -0.5px; margin-bottom: 30px; }
 
-        /* --- TABELLA STILIZZATA --- */
         .table-container {
             background: var(--card-bg);
             border-radius: 16px;
@@ -58,11 +54,7 @@
             backdrop-filter: blur(10px);
         }
 
-        .table-custom {
-            margin-bottom: 0;
-            background-color: transparent;
-            color: #e2e8f0;
-        }
+        .table-custom { margin-bottom: 0; color: #e2e8f0; }
 
         .table-custom th {
             background: rgba(15, 23, 42, 0.95) !important;
@@ -73,7 +65,6 @@
             font-size: 0.8rem;
             letter-spacing: 1px;
             padding: 18px 24px;
-            user-select: none;
         }
         
         .table-custom td {
@@ -83,48 +74,27 @@
             background-color: transparent;
         }
 
-        /* Hover sulla riga */
-        .table-custom tbody tr:hover {
-            background-color: var(--table-hover) !important;
-        }
+        .table-custom tbody tr:hover { background-color: var(--table-hover) !important; }
 
-        /* Link Intestazione Tabella */
         .sort-link {
             color: var(--accent);
             text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             gap: 5px;
-            cursor: pointer;
             transition: opacity 0.2s;
         }
         .sort-link:hover { opacity: 0.8; color: #fff; }
         .material-icons.sort-icon { font-size: 16px; }
 
-        /* --- DESCRIZIONE TRONCATA --- */
-        .col-desc-container { max-width: 350px; }
-        
         .col-desc-text {
-            display: block;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             color: #94a3b8;
-            transition: color 0.2s ease;
-            cursor: help;
+            font-size: 0.95rem;
         }
+        .table-custom tbody tr:hover .col-desc-text { color: #fff !important; }
 
-        .table-custom tbody tr:hover .col-desc-text {
-            color: #fff !important; 
-        }
+        .dato-assente { color: #64748b; font-style: italic; font-size: 0.85rem; }
 
-        .dato-assente {
-            color: #64748b;
-            font-style: italic;
-            font-size: 0.85rem;
-        }
-
-        /* --- BUTTONS --- */
         .btn-neon-sm {
             border: 1px solid var(--accent);
             color: var(--accent);
@@ -136,6 +106,7 @@
             text-decoration: none;
             transition: all 0.3s ease;
             display: inline-block;
+            text-align: center;
         }
         .btn-neon-sm:hover { 
             background: var(--accent); 
@@ -144,23 +115,22 @@
             transform: translateY(-1px);
         }
 
-        /* --- PAGINAZIONE --- */
-        .pagination { margin-bottom: 0; }
-        .page-item { margin: 0 4px; }
+        /* --- PAGINAZIONE MIGLIORATA --- */
+        .pagination { margin-bottom: 0; gap: 5px; }
+        .page-item { margin: 0; }
         
         .neon-page-link {
-            background-color: transparent !important;
-            color: var(--text-muted) !important;
+            background-color: var(--card-bg) !important;
+            color: var(--accent) !important;
             border: 1px solid rgba(255,255,255,0.1) !important;
             border-radius: 8px !important;
             transition: all 0.3s ease;
             padding: 8px 16px;
         }
-
         .neon-page-link:hover {
-            color: var(--accent) !important;
+            color: #0f172a !important;
+            background: var(--accent) !important;
             border-color: var(--accent) !important;
-            background: rgba(0, 242, 255, 0.1) !important;
         }
 
         .neon-page-active {
@@ -176,42 +146,26 @@
         .disabled-link {
             color: #475569 !important;
             border-color: #334155 !important;
-            background: transparent !important;
+            background: rgba(15, 23, 42, 0.5) !important;
             cursor: not-allowed;
             padding: 8px 16px;
             border-radius: 8px;
             display: block;
-            border: 1px solid transparent;
         }
 
-        /* =========================================
-           AGGIUNTA RESPONSIVE (CARD VIEW MOBILE)
-           ========================================= */
+        /* --- MOBILE VIEW --- */
         @media screen and (max-width: 991px) {
-            
-            /* Titolo più piccolo su mobile */
             h3 { font-size: 1.5rem; word-break: break-word; }
-
-            /* Nascondiamo intestazione e bordi del container */
             .table-container { background: transparent; box-shadow: none; border: none; backdrop-filter: none; }
             .table-custom thead { display: none; }
-
-            /* Trasformiamo le righe in CARD */
             .table-custom tbody, .table-custom tr, .table-custom td { display: block; width: 100%; }
-            
             .table-custom tr {
-                background: var(--card-bg) !important; /* Mantiene il tuo colore di sfondo */
+                background: var(--card-bg) !important;
                 margin-bottom: 20px;
                 border-radius: 16px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
                 padding: 20px;
             }
-
-            /* Rimuoviamo l'hover della tabella desktop */
-            .table-custom tr:hover { transform: none; background: var(--card-bg) !important; }
-
-            /* Stile celle interne alla card */
             .table-custom td {
                 padding: 10px 0;
                 border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -220,31 +174,17 @@
                 align-items: center;
                 text-align: right;
             }
-
             .table-custom td:last-child { border-bottom: none; padding-bottom: 0; padding-top: 15px; }
-
-            /* ETICHETTA (Label) a sinistra */
             .table-custom td::before {
                 content: attr(data-label);
-                float: left;
                 font-weight: 700;
                 text-transform: uppercase;
                 font-size: 0.75rem;
                 color: var(--text-muted);
-                letter-spacing: 1px;
             }
-
-            /* Fix contenuti */
-            .col-desc-container { max-width: 100%; }
-            /* Su mobile permettiamo al testo di andare a capo */
-            .col-desc-text { white-space: normal; text-align: right; font-size: 0.95rem; }
-            
-            /* Bottone largo su mobile */
-            .btn-neon-sm { width: 100%; padding: 10px; font-size: 1rem; text-align: center; }
-
-            /* Paginazione Mobile */
-            .pagination { justify-content: center; flex-wrap: wrap; }
-            .neon-page-link, .neon-page-active { padding: 6px 10px; font-size: 0.85rem; }
+            .btn-neon-sm { width: 100%; padding: 10px; font-size: 1rem; }
+            .pagination { flex-wrap: wrap; }
+            .neon-page-link, .neon-page-active, .disabled-link { padding: 6px 10px; font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -254,15 +194,10 @@
         
         <a href="{% url 'statistiche' %}" class="back-link">
             <span class="material-icons" style="font-size: 18px;">arrow_back</span>
-            Torna al Grafico
+            Torna alla Dashboard
         </a>
 
-        <h3>Guasto: <span style="color: var(--accent); text-shadow: 0 0 10px rgba(0,242,255,0.2);">{{ motivo }}</span></h3>
-
-        <div class="d-block d-lg-none mb-3 small">
-            <span class="material-icons" style="font-size: 14px; vertical-align: middle;">info</span>
-            Vista ottimizzata per mobile.
-        </div>
+        <h3>Lista: <span style="color: var(--accent); text-shadow: 0 0 10px rgba(0,242,255,0.2);">{{ motivo }}</span></h3>
 
         <div class="table-container">
             <div class="table-responsive-none">
@@ -272,44 +207,37 @@
                             <th>
                                 <a href="?page=1&sort=arm_id&direction={% if current_sort == 'arm_id' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
                                     ID Lampione
-                                    {% if current_sort == 'arm_id' %}
-                                        <span class="material-icons sort-icon">
-                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
-                                        </span>
-                                    {% endif %}
+                                    {% if current_sort == 'arm_id' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
                                 </a>
                             </th>
 
-                            <th>
-                                <a href="?page=1&sort=sgn_data_inserimento&direction={% if current_sort == 'sgn_data_inserimento' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
-                                    Data Intervento
-                                    {% if current_sort == 'sgn_data_inserimento' %}
-                                        <span class="material-icons sort-icon">
-                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-
-                            <th>
-                                <a href="?page=1&sort=tci_descr&direction={% if current_sort == 'tci_descr' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
-                                    Descrizione
-                                    {% if current_sort == 'tci_descr' %}
-                                        <span class="material-icons sort-icon">
-                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
+                            {% if is_risk_view %}
+                                <th>
+                                    <a href="?page=1&sort=risk_score&direction={% if current_sort == 'risk_score' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                        Risk Score
+                                        {% if current_sort == 'risk_score' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
+                                    </a>
+                                </th>
+                                <th>Data Calcolo AI</th>
+                            {% else %}
+                                <th>
+                                    <a href="?page=1&sort=sgn_data_inserimento&direction={% if current_sort == 'sgn_data_inserimento' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                        Data Intervento
+                                        {% if current_sort == 'sgn_data_inserimento' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?page=1&sort=tci_descr&direction={% if current_sort == 'tci_descr' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                        Descrizione
+                                        {% if current_sort == 'tci_descr' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
+                                    </a>
+                                </th>
+                            {% endif %}
 
                             <th>
                                 <a href="?page=1&sort=arm_altezza&direction={% if current_sort == 'arm_altezza' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
                                     Altezza
-                                    {% if current_sort == 'arm_altezza' %}
-                                        <span class="material-icons sort-icon">
-                                            {% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}
-                                        </span>
-                                    {% endif %}
+                                    {% if current_sort == 'arm_altezza' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
                                 </a>
                             </th>
 
@@ -321,17 +249,24 @@
                         <tr>
                             <td data-label="ID Lampione" style="font-weight: 700; color: #fff;">#{{ lampione.arm_id }}</td>
                             
-                            <td data-label="Data Intervento" style="color: var(--text-muted);">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
-                            
-                            <td data-label="Descrizione" class="col-desc-container">
-                                {% if lampione.tci_descr and lampione.tci_descr.strip %}
-                                    <span class="col-desc-text" title="{{ lampione.tci_descr }}">
-                                        {{ lampione.tci_descr }}
+                            {% if is_risk_view %}
+                                <td data-label="Risk Score">
+                                    <span class="badge" style="font-size: 0.9rem; padding: 6px 12px;
+                                          background-color: {% if lampione.risk_score > 0.70 %}#ef4444{% elif lampione.risk_score >= 0.25 %}#f59e0b{% else %}#10b981{% endif %};">
+                                        {% widthratio lampione.risk_score 1 100 %}%
                                     </span>
-                                {% else %}
-                                    <span class="dato-assente">Nessuna descrizione</span>
-                                {% endif %}
-                            </td>
+                                </td>
+                                <td data-label="Data Calcolo AI" class="col-desc-text">{{ lampione.risk_score_date|date:"d/m/Y H:i"|default:"N/D" }}</td>
+                            {% else %}
+                                <td data-label="Data Intervento" style="color: var(--text-muted);">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
+                                <td data-label="Descrizione">
+                                    {% if lampione.tci_descr %}
+                                        <span class="col-desc-text">{{ lampione.tci_descr }}</span>
+                                    {% else %}
+                                        <span class="dato-assente">Nessuna descrizione</span>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
                             
                             <td data-label="Altezza">
                                 {% if lampione.arm_altezza %}
@@ -341,17 +276,13 @@
                                 {% endif %}
                             </td>
                             
-                            <td data-label="" class="text-end">
-                                <a href="{% url 'dettaglio_lampione' lampione.pk %}" class="btn-neon-sm">
-                                    Vedi Scheda
-                                </a>
+                            <td data-label="Azione" class="text-end">
+                                <a href="{% url 'dettaglio_asset' lampione.pk %}" class="btn-neon-sm">Vedi Scheda</a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="p-5 text-center text-muted">
-                                Nessun dato trovato per questa tipologia di guasto.
-                            </td>
+                            <td colspan="5" class="p-5 text-center text-muted">Nessun dato trovato.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -363,50 +294,33 @@
             <ul class="pagination justify-content-center align-items-center">
                 
                 {% if lampioni.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link neon-page-link" href="?page=1&sort={{ current_sort }}&direction={{ current_direction }}" title="Prima pagina">
-                            &laquo;
-                        </a>
+                    <li class="page-item d-none d-sm-block">
+                        <a class="page-link neon-page-link" href="?page=1&sort={{ current_sort }}&direction={{ current_direction }}">&laquo; Prima</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link neon-page-link" href="?page={{ lampioni.previous_page_number }}&sort={{ current_sort }}&direction={{ current_direction }}">
-                            Indietro
-                        </a>
+                        <a class="page-link neon-page-link" href="?page={{ lampioni.previous_page_number }}&sort={{ current_sort }}&direction={{ current_direction }}">Precedente</a>
                     </li>
                 {% else %}
-                    <li class="page-item">
-                        <span class="disabled-link">&laquo;</span>
-                    </li>
-                    <li class="page-item">
-                        <span class="disabled-link">Indietro</span>
-                    </li>
+                    <li class="page-item d-none d-sm-block"><span class="disabled-link">&laquo; Prima</span></li>
+                    <li class="page-item"><span class="disabled-link">Precedente</span></li>
                 {% endif %}
 
                 <li class="page-item">
-                    <span class="neon-page-active">
-                        Pag. {{ lampioni.number }} di {{ lampioni.paginator.num_pages }}
-                    </span>
+                    <span class="neon-page-active">Pag. {{ lampioni.number }} di {{ lampioni.paginator.num_pages }}</span>
                 </li>
 
                 {% if lampioni.has_next %}
                     <li class="page-item">
-                        <a class="page-link neon-page-link" href="?page={{ lampioni.next_page_number }}&sort={{ current_sort }}&direction={{ current_direction }}">
-                            Avanti
-                        </a>
+                        <a class="page-link neon-page-link" href="?page={{ lampioni.next_page_number }}&sort={{ current_sort }}&direction={{ current_direction }}">Avanti</a>
                     </li>
-                    <li class="page-item">
-                        <a class="page-link neon-page-link" href="?page={{ lampioni.paginator.num_pages }}&sort={{ current_sort }}&direction={{ current_direction }}" title="Ultima pagina">
-                            &raquo;
-                        </a>
+                    <li class="page-item d-none d-sm-block">
+                        <a class="page-link neon-page-link" href="?page={{ lampioni.paginator.num_pages }}&sort={{ current_sort }}&direction={{ current_direction }}">Ultima &raquo;</a>
                     </li>
                 {% else %}
-                    <li class="page-item">
-                        <span class="disabled-link">Avanti</span>
-                    </li>
-                    <li class="page-item">
-                        <span class="disabled-link">&raquo;</span>
-                    </li>
+                    <li class="page-item"><span class="disabled-link">Avanti</span></li>
+                    <li class="page-item d-none d-sm-block"><span class="disabled-link">Ultima &raquo;</span></li>
                 {% endif %}
+
             </ul>
         </nav>
 
@@ -417,47 +331,20 @@
     </a>
 
     <style>
-        /* Stile per il bottone flottante */
         .btn-home-floating {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background-color: rgba(15, 23, 42, 0.9);
-            border: 2px solid #00f2ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #00f2ff;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
-            z-index: 9999;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-decoration: none;
+            position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
+            background-color: rgba(15, 23, 42, 0.9); border: 2px solid #00f2ff; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #00f2ff; box-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+            z-index: 9999; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); text-decoration: none;
         }
-
         .btn-home-floating:hover {
-            transform: scale(1.1) rotate(-10deg);
-            background-color: #00f2ff;
-            color: #0f172a;
-            box-shadow: 0 0 30px rgba(0, 242, 255, 0.8);
+            transform: scale(1.1) rotate(-10deg); background-color: #00f2ff; color: #0f172a; box-shadow: 0 0 30px rgba(0, 242, 255, 0.8);
         }
-
-        .btn-home-floating .material-icons {
-            font-size: 32px;
-        }
-
+        .btn-home-floating .material-icons { font-size: 32px; }
         @media (max-width: 768px) {
-            .btn-home-floating {
-                bottom: 20px;
-                right: 20px;
-                width: 50px;
-                height: 50px;
-            }
-            .btn-home-floating .material-icons {
-                font-size: 24px;
-            }
+            .btn-home-floating { bottom: 20px; right: 20px; width: 50px; height: 50px; }
+            .btn-home-floating .material-icons { font-size: 24px; }
         }
     </style>
 

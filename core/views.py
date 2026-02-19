@@ -103,13 +103,21 @@ def dashboard(request):
         labels.append('Altro (Guasti minori)')
         data.append(altri_count)
 
+    # NUOVO: Calcolo dati per il grafico a torta AI
+    tot_critico = LampioneNuovo.objects.filter(risk_score__gt=0.70).count()
+    tot_attenzione = LampioneNuovo.objects.filter(risk_score__gte=0.25, risk_score__lte=0.70).count()
+    tot_ottimo = LampioneNuovo.objects.filter(risk_score__lt=0.25).count()
+
     context = {
         'chart_labels': labels,
         'chart_data': data,
         'chart_Intervento': [item['tci_descr'] for item in query_manutenzione],
         'chart_Intervento_data': [item['numero_utilizzi'] for item in query_manutenzione],
-        'chart_Intervento_media': [0 for item in query_manutenzione], # <-- Fallback a 0
+        'chart_Intervento_media': [0 for item in query_manutenzione],
+        # Nuovi dati passati al template:
+        'risk_data': [tot_ottimo, tot_attenzione, tot_critico]
     }
+    
     return render(request, 'core/dashboard.html', context)
 
 
@@ -280,3 +288,39 @@ def dettaglio_asset(request, pk):
         })
         
     return render(request, 'core/lampione_asset.html', context)
+
+def dettaglio_rischio(request, livello):
+    sort_by = request.GET.get('sort', 'risk_score')
+    direction = request.GET.get('direction', 'desc')
+
+    ordering = sort_by if direction == 'asc' else '-' + sort_by
+
+    valid_fields = ['arm_id', 'risk_score', 'arm_altezza', 'risk_score_date']
+    if sort_by not in valid_fields:
+        ordering = '-risk_score'
+
+    if livello == 'critico':
+        qs = LampioneNuovo.objects.filter(risk_score__gt=0.70)
+        titolo = "Rischio Critico (> 70%)"
+    elif livello == 'attenzione':
+        qs = LampioneNuovo.objects.filter(risk_score__gte=0.25, risk_score__lte=0.70)
+        titolo = "In Osservazione (25% - 70%)"
+    else:
+        qs = LampioneNuovo.objects.filter(risk_score__lt=0.25)
+        titolo = "Stato Ottimo (< 25%)"
+
+    lista_completa = qs.order_by(ordering)
+
+    paginator = Paginator(lista_completa, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'motivo': titolo,
+        'lampioni': page_obj,
+        'current_sort': sort_by,
+        'current_direction': direction,
+        'is_risk_view': True, # Flag che ci permette di riutilizzare lo stesso template!
+        'livello': livello
+    }
+    return render(request, 'core/dettaglio.html', context)
