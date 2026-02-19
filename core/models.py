@@ -36,5 +36,5 @@ class LampioneNuovo(LampioneBase):
 class LampioneManutenzione(LampioneBase):
     latitudine = models.FloatField(null=True, blank=True)
     longitudine = models.FloatField(null=True, blank=True)
-    giorni_guasto = models.IntegerField(null=True, blank=True)
+    #giorni_guasto = models.IntegerField(null=True, blank=True)
     pass
