@@ -1,3 +1,4 @@
+from django.db import connection
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Sum, Count, Avg, F, ExpressionWrapper, DurationField
 from .models import LampioneNuovo, LampioneManutenzione
@@ -134,7 +135,7 @@ def dashboard(request):
         'chart_Intervento_media': [int(item['media']) for item in query_manutenzione],
 
     }
-    print(query_manutenzione)
+    #print(query_manutenzione)
     return render(request, 'core/dashboard.html', context)
 
 def dettaglio_guasto(request, motivo_guasto):
@@ -193,14 +194,106 @@ def dettaglio_lampione(request, pk):
     })
 
 def dettaglio_asset(request, pk):
+    from django.db import connection
+
+    sql = """WITH base AS (
+  SELECT
+    COALESCE(NULLIF(TRIM(tcs_descr), ''), 'Senza categoria') AS tcs_descr,
+    giorni_guasto
+  FROM core_lampionemanutenzione
+  WHERE arm_lmp_potenza_nominale = %s
+    AND arm_altezza = %s
+    AND tcs_descr IS NOT NULL
+),
+tot AS (
+  SELECT CAST(COUNT(*) AS REAL) AS n_tot
+  FROM base
+)
+SELECT
+  b.tcs_descr,
+  (CAST(COUNT(*) AS REAL) / tot.n_tot) AS prob_guasto,
+  CAST(AVG(b.giorni_guasto) AS REAL) AS giorni_medi_rimasti,
+  COUNT(*) AS n_eventi
+FROM base b
+CROSS JOIN tot
+GROUP BY b.tcs_descr, tot.n_tot
+ORDER BY prob_guasto DESC;
+
+    """
+    
     # Recuperiamo l'oggetto dal modello dell'anagrafica (NON manutenzione)
     lampione = get_object_or_404(LampioneNuovo, pk=pk)
+    with connection.cursor() as cursor:
+        cursor.execute(sql, [lampione.arm_lmp_potenza_nominale, lampione.arm_altezza])  # <- lista/tuple, non dict
+        rows = cursor.fetchall()
     
+    rows=rows[:5]
+    #(tcs_descr, prob_guasto, giorni_medi_rimasti, n_eventi)
+    sql="""WITH unione AS (
+  -- LampioneNuovo: giorni senza guasto = oggi - data installazione
+  SELECT
+    arm_lmp_potenza_nominale AS potenza,
+    arm_altezza AS altezza,
+    (julianday('now') - julianday(arm_data_ini)) AS giorni_senza_guasto
+  FROM core_lampionenuovo
+  WHERE arm_data_ini IS NOT NULL
+    AND arm_lmp_potenza_nominale IS NOT NULL
+    AND arm_altezza IS NOT NULL
+
+  UNION ALL
+
+  -- LampioneManutenzione: giorni_senza_guasto = campo giorni_guasto
+  SELECT
+    arm_lmp_potenza_nominale AS potenza,
+    arm_altezza AS altezza,
+    CAST(giorni_guasto AS REAL) AS giorni_senza_guasto
+  FROM core_lampionemanutenzione
+  WHERE giorni_guasto IS NOT NULL
+    AND arm_lmp_potenza_nominale IS NOT NULL
+    AND arm_altezza IS NOT NULL
+)
+
+SELECT
+  potenza,
+  altezza,
+  AVG(giorni_senza_guasto) AS media_giorni_senza_guasto,
+  COUNT(*) AS n_record
+FROM unione
+GROUP BY potenza, altezza
+ORDER BY potenza, altezza;
+"""
+    media_giorni_senza_guasto=1500
+    with connection.cursor() as cursor:
+        cursor.execute(sql)
+        righe = cursor.fetchall()
+    for i in righe:
+        if(i[0]==lampione.arm_lmp_potenza_nominale and i[1]==lampione.arm_altezza):
+            print("Trovato record simile: ",i)
+            media_giorni_senza_guasto=i[2]
+            break
+    print(media_giorni_senza_guasto)
+    #print(rows)
+    print("probabilità: ")
+    sumPro=0
+    sumGiorni=0
+    for row in rows:
+        sumPro+=row[1]
+        sumGiorni+=row[2]
+    
+    print(lampione.arm_data_ini,sumGiorni)
+
     # --- SIMULAZIONE PREDITTIVA (AI Placeholder) ---
     # Generiamo dati coerenti con quelli della mappa
     # In produzione, qui chiameresti il tuo modello ML
-    giorni_rimanenti = random.randint(1, 365)
-    data_rottura = datetime.now() + timedelta(days=giorni_rimanenti)
+    lenght=len(rows)
+    if lenght==0:
+        giorni_rimanenti = 365  # Se non ci sono dati, assumiamo un asset nuovo di zecca
+    else:
+        giorni_rimanenti = ((lampione.arm_data_ini + timedelta(days=int(media_giorni_senza_guasto))) - datetime.now().date()).days
+    data_rottura = (lampione.arm_data_ini + timedelta(days=int(media_giorni_senza_guasto)))
+    print(giorni_rimanenti)
+    #giorni_rimanenti = int(sumGiorni / len(rows))
+    
     
     stato = "OTTIMO"
     colore_stato = "#00ff9d" # Verde
@@ -236,6 +329,15 @@ def dettaglio_asset(request, pk):
             'stato': stato,
             'colore': colore_stato,
             'messaggio': messaggio
-        }
+        },
+        "guasti_simili": [],
+        "nGuasti": len(rows)
     }
+    for row in rows:
+        context["guasti_simili"].append({
+            "tipoGuasto": row[0],
+            "probGuasto": round(row[1]*100, 2),
+            "giorniRimasti": ((lampione.arm_data_ini + timedelta(days=int(int(row[2])))) - datetime.now().date()).days
+        })
+    #print(context)
     return render(request, 'core/lampione_asset.html', context)
