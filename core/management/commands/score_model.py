@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument("--model", type=str, required=True, help="Path al modello .joblib.")
         parser.add_argument("--csv", type=str, required=True, help="Path al CSV delle armature attive (es. lampioni_attivi_coordinate.csv).")
-        parser.add_argument("--out-csv", type=str, default="ml_artifacts/risk_scores.csv")
+        parser.add_argument("--out-csv", type=str, default="ml_artifacts/risk_scores_con_residui.csv")
 
     def handle(self, *args, **opts):
         model_path = opts["model"]
@@ -59,7 +59,6 @@ class Command(BaseCommand):
         self.stdout.write("Calcolo delle predizioni in corso...")
         proba = clf.predict_proba(X)[:, 1]
         df["risk_score"] = proba
-
         # Salvataggio file CSV per sicurezza/debug
         df_out = df[["arm_id", "risk_score"]].sort_values("risk_score", ascending=False)
         df_out.to_csv(out_csv, index=False)
@@ -72,12 +71,24 @@ class Command(BaseCommand):
         self.stdout.write("Aggiornamento del Database in corso...")
         scores_dict = df_out.set_index('arm_id')['risk_score'].to_dict()
         
+        pred = pd.read_csv("macchine learning\\predizioneDelGesu.csv")
+
+        merged = df_out.merge(
+            pred[["arm_id", "pred_giorni_residui"]],
+            on="arm_id",
+            how="inner"
+        )
+        merged.loc[merged["pred_giorni_residui"] > 10000, "pred_giorni_residui"] = -1
+
+        merged=merged.set_index('arm_id')['pred_giorni_residui'].to_dict()
+        
         # Prendiamo dal DB solo i lampioni che esistono nel CSV
         lampioni = LampioneNuovo.objects.filter(arm_id__in=scores_dict.keys())
-        
+        #print(giorni_dict)
         for lampione in lampioni:
             lampione.risk_score = scores_dict[lampione.arm_id]
             lampione.risk_score_date = now()
+            lampione.traQuantoSiRompe = merged[lampione.arm_id]
             
-        LampioneNuovo.objects.bulk_update(lampioni, ['risk_score', 'risk_score_date'])
+        LampioneNuovo.objects.bulk_update(lampioni, ['risk_score', 'risk_score_date','traQuantoSiRompe'])
         self.stdout.write(self.style.SUCCESS("Database Django aggiornato con successo! Siete pronti per la mappa!"))
