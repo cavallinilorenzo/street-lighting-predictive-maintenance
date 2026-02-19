@@ -166,16 +166,19 @@ def train_model(csv_path: str) -> None:
         "objective": "survival:aft",
         "eval_metric": "aft-nloglik",
         "tree_method": "hist",
-        "max_depth": 6,
-        "eta": 0.05,
-        "subsample": 0.85,
-        "colsample_bytree": 0.85,
-        "lambda": 1.0,
+        "max_depth": 4,
+        "min_child_weight": 20,
+        "eta": 0.03,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "lambda": 5.0,
         "alpha": 0.0,
+        "gamma": 0.2,
         "aft_loss_distribution": "logistic",
         "aft_loss_distribution_scale": 1.0,
-        "seed": RANDOM_STATE,
+        "seed": 42,
     }
+
 
     booster = xgb.train(
         params=params,
