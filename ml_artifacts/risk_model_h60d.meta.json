@@ -1,24 +1,10 @@
 {
-  "horizon_days": 60,
-  "test_days": 180,
-  "split_date": "2025-08-16 14:29:29",
-  "max_snapshot_date": "2026-02-12 14:29:29",
   "numeric_features": [
     "arm_altezza",
-    "arm_lunghezza_sbraccio",
-    "arm_numero_lampade",
     "arm_lmp_potenza_nominale",
-    "cnt_events_30d",
-    "cnt_events_90d",
-    "cnt_events_180d",
-    "days_since_last_event",
-    "days_since_last_replace"
+    "giorni_osservati_finora"
   ],
   "categorical_features": [
-    "tar_cod",
-    "tmo_id",
-    "tpo_cod"
-  ],
-  "csv_path": "lampioni_manutenzioni_coordinate.csv",
-  "max_rows": null
+    "tmo_id"
+  ]
 }
