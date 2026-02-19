@@ -33,7 +33,7 @@ def mappa_lampioni(request):
                 colore_icona = "green"
                 stato_salute = "OTTIMO"
             
-            rischio_perc = f"{int(lampione.risk_score * 100)}%"
+            rischio_perc = f"{round(lampione.risk_score * 100)}%"
         else:
             colore_icona = "lightgray"
             stato_salute = "SCONOSCIUTO"
