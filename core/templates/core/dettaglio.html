@@ -218,7 +218,13 @@
                                         {% if current_sort == 'risk_score' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
                                     </a>
                                 </th>
-                                <th>Data Calcolo AI</th>
+                                
+                                <th>
+                                    <a href="?page=1&sort=traQuantoSiRompe&direction={% if current_sort == 'traQuantoSiRompe' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
+                                        Giorni Stimati
+                                        {% if current_sort == 'traQuantoSiRompe' %}<span class="material-icons sort-icon">{% if current_direction == 'asc' %}arrow_upward{% else %}arrow_downward{% endif %}</span>{% endif %}
+                                    </a>
+                                </th>
                             {% else %}
                                 <th>
                                     <a href="?page=1&sort=sgn_data_inserimento&direction={% if current_sort == 'sgn_data_inserimento' and current_direction == 'asc' %}desc{% else %}asc{% endif %}" class="sort-link">
@@ -256,7 +262,14 @@
                                         {% widthratio lampione.risk_score 1 100 %}%
                                     </span>
                                 </td>
-                                <td data-label="Data Calcolo AI" class="col-desc-text">{{ lampione.risk_score_date|date:"d/m/Y H:i"|default:"N/D" }}</td>
+                                
+                                <td data-label="Giorni Stimati">
+                                    {% if lampione.traQuantoSiRompe != None %}
+                                        <span style="color: var(--accent); font-weight: 600;">~ {{ lampione.traQuantoSiRompe }} gg</span>
+                                    {% else %}
+                                        <span class="dato-assente">N/D</span>
+                                    {% endif %}
+                                </td>
                             {% else %}
                                 <td data-label="Data Intervento" style="color: var(--text-muted);">{{ lampione.sgn_data_inserimento|date:"d/m/Y" }}</td>
                                 <td data-label="Descrizione">

@@ -179,7 +179,10 @@ def dettaglio_lampione(request, pk):
 
 
 def dettaglio_asset(request, pk):
-    sql = """WITH base AS (
+    lampione = get_object_or_404(LampioneNuovo, pk=pk)
+    
+    # --- 1. PRIMO TENTATIVO: Dati specifici per combinazione Altezza / Potenza ---
+    sql_specific = """WITH base AS (
       SELECT
         COALESCE(NULLIF(TRIM(tcs_descr), ''), 'Senza categoria') AS tcs_descr
       FROM core_lampionemanutenzione
@@ -202,12 +205,39 @@ def dettaglio_asset(request, pk):
     ORDER BY prob_guasto DESC;
     """
     
-    lampione = get_object_or_404(LampioneNuovo, pk=pk)
     with connection.cursor() as cursor:
-        cursor.execute(sql, [lampione.arm_lmp_potenza_nominale, lampione.arm_altezza])
+        cursor.execute(sql_specific, [lampione.arm_lmp_potenza_nominale, lampione.arm_altezza])
         rows = cursor.fetchall()
-    
-    # Raccogliamo comunque tutti i dati dalla query, ma il frontend ne mostrerà solo 1
+        
+    tipo_statistica = "Dato basato su armature con la stessa altezza e potenza."
+
+    # --- 2. FALLBACK PIANO B: Statistica su base cittadina se la prima fallisce ---
+    if not rows:
+        sql_fallback = """WITH base AS (
+          SELECT
+            COALESCE(NULLIF(TRIM(tcs_descr), ''), 'Senza categoria') AS tcs_descr
+          FROM core_lampionemanutenzione
+          WHERE tcs_descr IS NOT NULL
+        ),
+        tot AS (
+          SELECT CAST(COUNT(*) AS REAL) AS n_tot
+          FROM base
+        )
+        SELECT
+          b.tcs_descr,
+          (CAST(COUNT(*) AS REAL) / tot.n_tot) AS prob_guasto,
+          0 AS giorni_medi_rimasti,
+          COUNT(*) AS n_eventi
+        FROM base b
+        CROSS JOIN tot
+        GROUP BY b.tcs_descr, tot.n_tot
+        ORDER BY prob_guasto DESC;
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(sql_fallback)
+            rows = cursor.fetchall()
+        tipo_statistica = "Dati specifici assenti. Media calcolata sull'intera città."
+
     eta_anni = 0
     if lampione.arm_data_ini:
         try:
@@ -274,6 +304,7 @@ def dettaglio_asset(request, pk):
     context = {
         'lampione': lampione,
         'mappa': mappa_html,
+        'tipo_statistica': tipo_statistica,
         'ai_data': {
             'giorni': giorni_rimanenti,
             'data_prevista': data_rottura,
@@ -302,7 +333,7 @@ def dettaglio_rischio(request, livello):
 
     ordering = sort_by if direction == 'asc' else '-' + sort_by
 
-    valid_fields = ['arm_id', 'risk_score', 'arm_altezza', 'risk_score_date']
+    valid_fields = ['arm_id', 'risk_score', 'arm_altezza', 'risk_score_date', 'traQuantoSiRompe']
     if sort_by not in valid_fields:
         ordering = '-risk_score'
 
