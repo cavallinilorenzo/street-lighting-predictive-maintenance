@@ -133,6 +133,7 @@
         <span class="material-icons">close</span> Chiudi
     </a>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             if (window.opener || window.history.length <= 1) {
@@ -141,6 +142,29 @@
                 document.getElementById('btn-back').style.display = 'inline-flex';
             }
         });
+
+        function simulaInvioTicket() {
+            // 1. Sostituisce il form con un messaggio di successo accattivante
+            document.getElementById('modalBodyForm').innerHTML = `
+                <div class="alert alert-success text-center mb-0">
+                    <h1 style="color: #10b981;">✔️</h1>
+                    <h4 class="mt-2">Ticket Inviato!</h4>
+                    <p class="mb-0">La segnalazione per l'asset <b>#{{ lampione.arm_id }}</b> è stata registrata a sistema (Simulazione).</p>
+                </div>
+            `;
+            
+            // 2. Nasconde i bottoni "Annulla" e "Invia"
+            document.getElementById('modalFooterForm').style.display = 'none';
+            
+            // 3. (Opzionale) Chiude il popup da solo dopo 3.5 secondi
+            setTimeout(() => {
+                let modalElement = document.getElementById('modalSegnalazione');
+                let modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if(modalInstance) {
+                    modalInstance.hide();
+                }
+            }, 3500);
+        }
     </script>
 
     <div class="row align-items-center mb-4">
@@ -285,7 +309,46 @@
                 </div>
             </div>
         </div>
+        <button type="button" class="btn btn-warning mt-3" data-bs-toggle="modal" data-bs-target="#modalSegnalazione">
+    <i class="fa fa-exclamation-triangle"></i> Segnala Guasto
+</button>
+
+<div class="modal fade" id="modalSegnalazione" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content text-dark" style="background-color: #f8f9fa;">
+      
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLabel">Segnala Guasto - Lampione #{{ lampione.arm_id }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body" id="modalBodyForm">
+         <p class="text-muted small">Usa questo modulo per simulare l'apertura di un ticket di manutenzione.</p>
+         
+         <label class="form-label fw-bold">Tipo di problema</label>
+         <select class="form-select mb-3">
+            <option>Lampada spenta / Fulminata</option>
+            <option>Luce sfarfallante</option>
+            <option>Palo danneggiato o pericolante</option>
+            <option>Vandalismo</option>
+            <option>Altro...</option>
+         </select>
+         
+         <label class="form-label fw-bold">Note per i tecnici</label>
+         <textarea class="form-control" rows="3" placeholder="Inserisci dettagli aggiuntivi..."></textarea>
+      </div>
+      
+      <div class="modal-footer" id="modalFooterForm">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-danger" onclick="simulaInvioTicket()">Invia Ticket</button>
+      </div>
+      
     </div>
+  </div>
+</div>
+    </div>
+
+    
 
 </div>
 
@@ -324,6 +387,5 @@
         font-size: 32px;
     }
 </style>
-
 </body>
 </html>
