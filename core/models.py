@@ -30,10 +30,10 @@ class LampioneBase(models.Model):
 class LampioneNuovo(LampioneBase):
     latitudine = models.FloatField(null=True, blank=True)
     longitudine = models.FloatField(null=True, blank=True)
-    risk_score = models.FloatField(null=True, blank=True, help_text="Probabilità di guasto (0.0-1.0)")
-    risk_score_date = models.DateTimeField(null=True, blank=True, help_text="Data calcolo AI")
+    giorni_vita_attuale = models.IntegerField(null=True, blank=True)
     traQuantoSiRompe = models.IntegerField(null=True, blank=True)
-
+    prob_guasto= models.FloatField(null=True, blank=True)
+    
     pass
 
 # Tabella per lampioni_con_manutenzione.csv

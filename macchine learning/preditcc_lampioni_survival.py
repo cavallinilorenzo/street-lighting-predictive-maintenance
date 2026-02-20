@@ -19,7 +19,7 @@ import xgboost as xgb
 MODEL_DIR = "model_lampioni_survival"
 
 # Limiti "di sicurezza" per evitare numeri fuori scala (regola business)
-MAX_YEARS = 10
+MAX_YEARS = 5
 MAX_DAYS = 365 * MAX_YEARS
 
 

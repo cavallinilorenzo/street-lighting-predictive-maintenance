@@ -99,3 +99,5 @@ class Command(BaseCommand):
             
         LampioneNuovo.objects.bulk_update(lampioni, ['risk_score', 'risk_score_date','traQuantoSiRompe'])
         self.stdout.write(self.style.SUCCESS("Database Django aggiornato con successo! Siete pronti per la mappa!"))
+
+        #python .\manage.py score_model --model ml_artifacts\risk_model_h60d.joblib --csv .\lampioni_attivi_coordinate.csv
