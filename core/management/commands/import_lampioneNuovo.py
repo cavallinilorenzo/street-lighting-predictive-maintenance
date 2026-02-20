@@ -3,6 +3,9 @@ import numpy as np
 import sys
 from django.core.management.base import BaseCommand
 from core.models import LampioneNuovo
+import random
+from datetime import datetime, timedelta
+
 
 class Command(BaseCommand):
     help = 'Svuota la tabella e importa i nuovi lampioni da CSV (Digital Twin)'
@@ -10,7 +13,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # --- PARAMETRI ---
         # Se stai usando il file con le coordinate generato da OSMnx, assicurati che il nome sia questo:
-        CSV_FILE = 'lampioni_attivi_coordinate.csv' 
+        CSV_FILE = 'output.csv' 
         CHUNK_SIZE = 5000
 
         self.stdout.write(self.style.WARNING(f"1. Svuotamento della tabella 'core_LampioneNuovo' in corso..."))
@@ -29,7 +32,7 @@ class Command(BaseCommand):
 
         # Gestione date
         if 'arm_data_ini' in df.columns:
-            df['arm_data_ini'] = pd.to_datetime(df['arm_data_ini'], format='%d/%m/%Y', errors='coerce')
+            df['arm_data_ini'] = pd.to_datetime(df['arm_data_ini'], format='%Y-%m-%d', errors='coerce')
         if 'arm_data_fin' in df.columns:
             df['arm_data_fin'] = pd.to_datetime(df['arm_data_fin'], format='%d/%m/%Y', errors='coerce')
 
@@ -52,9 +55,15 @@ class Command(BaseCommand):
                 tpo_descr=row['tpo_descr'],
                 tmo_id=row['tmo_id'],
                 # Inserimento delle coordinate (usa .get per evitare errori se la colonna manca)
+                giorni_vita_attuale=row.get('giorni_vita_attuale', None),
+                risk_score=row.get('prob_guasto', None)/100,
                 latitudine=row.get('latitudine', None),
+                traQuantoSiRompe=100/int(row.get('prob_guasto', None)) * 120 + random.randint(int(-((100/row.get('prob_guasto', None) * 120)/10)), int(((100/row.get('prob_guasto', None) * 120)/20))),
+                #risk_score_date=row['arm_data_ini'].date() + ,
                 longitudine=row.get('longitudine', None)
             )
+            if lampione.arm_data_ini and lampione.traQuantoSiRompe:
+                lampione.risk_score_date = datetime.now().date() + timedelta(days=int(lampione.traQuantoSiRompe))
             records_to_create.append(lampione)
 
             if len(records_to_create) >= CHUNK_SIZE:
