@@ -199,7 +199,7 @@
                     <div class="col-md-4 text-center border-start border-secondary py-2">
                         <div class="row">
                             <div class="col-6 border-end border-secondary">
-                                <div class="stat-label">Rischio</div>
+                                <div class="stat-label">Rischio (120gg)</div>
                                 <div class="stat-value" style="color: var(--ai-color);">
                                     {% if lampione.risk_score != None %}
                                         {% widthratio lampione.risk_score 1 100 %}%
@@ -277,27 +277,6 @@
                         </tr>
                     </tbody>
                 </table>
-                
-                <div class="flex-grow-1"></div>
-                
-                {% if guasti_simili %}
-                <div class="mb-4">
-                    <h6 class="text-muted mb-1 text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">Causa di guasto prevalente stimata</h6>
-                    <p class="mb-2" style="font-size: 0.75rem; color: #64748b; font-style: italic;">{{ tipo_statistica }}</p>
-                    
-                    <div class="p-3 rounded" style="background: rgba(0, 242, 255, 0.05); border: 1px solid rgba(0, 242, 255, 0.2);">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-white d-flex align-items-center">
-                                <span class="material-icons me-2" style="color: var(--accent); font-size: 20px;">warning_amber</span>
-                                {{ guasti_simili.0.tipoGuasto }}
-                            </span>
-                            <span class="badge" style="background-color: var(--accent); color: #0f172a; font-size: 0.9rem;">
-                                {{ guasti_simili.0.probGuasto }}%
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
                 
                 <div class="mt-auto text-center">
                     <a href="{% url 'scarica_pdf_asset' lampione.pk %}" class="btn btn-outline-light w-100 py-2" style="border-color: var(--accent); color: var(--accent);">

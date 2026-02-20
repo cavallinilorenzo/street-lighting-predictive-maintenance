@@ -280,11 +280,18 @@
                     scales: {
                         x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
                         y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    },
+                    // --- NUOVO EVENTO ONCLICK AGGIUNTO QUI ---
+                    onClick: (evt, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const index = activeElements[0].index;
+                            const label = intLabels[index];
+                            window.location.href = "/dettaglio-intervento/" + encodeURIComponent(label) + "/";
+                        }
                     }
                 }
             });
         }
-
     } catch (error) {
         console.error("Errore nel caricamento dei grafici:", error);
     }

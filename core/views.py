@@ -59,7 +59,7 @@ def mappa_lampioni(request):
                 <b style="color: gray;">Stato:</b> 
                 <span style="color:{colore_icona}; font-weight:bold;">{stato_salute}</span><br>
                 
-                <b style="color: gray;">Rischio Sostituzione (60gg):</b> {rischio_perc}<br>
+                <b style="color: gray;">Rischio Sostituzione (120gg):</b> {rischio_perc}<br>
                 <hr style="margin: 5px 0;">
                 
                 <a href="{url_dettaglio}" target="_blank" 
@@ -313,16 +313,8 @@ def dettaglio_asset(request, pk):
             'messaggio': messaggio,
             'motivazione': motivazione
         },
-        "guasti_simili": [],
         "nGuasti": len(rows)
     }
-    
-    for row in rows:
-        context["guasti_simili"].append({
-            "tipoGuasto": row[0],
-            "probGuasto": round(row[1]*100, 2),
-            "giorniRimasti": giorni_rimanenti 
-        })
         
     return render(request, 'core/lampione_asset.html', context)
 
@@ -448,9 +440,8 @@ def scarica_pdf_asset(request, pk):
     giorni = getattr(lampione, 'traQuantoSiRompe', "N/D")
     
     data_ml = [
-        ['Rischio Sostituzione (60gg)', risk_perc],
-        ['Giorni Stimati alla Rottura', f"{giorni} gg" if giorni != "N/D" else "N/D"],
-        ['Ultimo Check Algoritmo', lampione.risk_score_date.strftime("%d/%m/%Y %H:%M") if lampione.risk_score_date else "Mai elaborato"]
+        ['Rischio Sostituzione (120gg)', risk_perc],
+        ['Giorni Stimati alla Rottura', f"{giorni} gg" if giorni != "N/D" else "N/D"]
     ]
     t2 = Table(data_ml, colWidths=[200, 250])
     t2.setStyle(TableStyle([
@@ -470,3 +461,32 @@ def scarica_pdf_asset(request, pk):
     doc.build(elements)
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"Report_Asset_{lampione.arm_id}.pdf")
+
+def dettaglio_intervento(request, tipo_intervento):
+    sort_by = request.GET.get('sort', 'sgn_data_inserimento')
+    direction = request.GET.get('direction', 'desc')
+
+    ordering = sort_by
+    if direction == 'desc':
+        ordering = '-' + sort_by
+
+    valid_fields = ['arm_id', 'sgn_data_inserimento', 'tci_descr', 'arm_altezza']
+    if sort_by not in valid_fields:
+        ordering = '-sgn_data_inserimento'
+
+    # Filtriamo per tipo di intervento (tci_descr)
+    lista_completa = LampioneManutenzione.objects.filter(
+        tci_descr=tipo_intervento
+    ).order_by(ordering)
+
+    paginator = Paginator(lista_completa, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'motivo': tipo_intervento,  # Questo sarà il titolo nella pagina dettaglio.html
+        'lampioni': page_obj,
+        'current_sort': sort_by,
+        'current_direction': direction
+    }
+    return render(request, 'core/dettaglio.html', context)
