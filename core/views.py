@@ -179,8 +179,13 @@ def dettaglio_lampione(request, pk):
 
 
 def dettaglio_asset(request, pk):
-    lampione = get_object_or_404(LampioneNuovo, pk=pk)
-    
+    lampNuovo=True
+    if LampioneManutenzione.objects.filter(pk=pk).exists():
+        lampNuovo = False
+        lampione = LampioneManutenzione.objects.filter(pk=pk).first()
+    else:
+        lampNuovo = True
+        lampione = LampioneNuovo.objects.filter(pk=pk).first()
     # --- 1. PRIMO TENTATIVO: Dati specifici per combinazione Altezza / Potenza ---
     sql_specific = """WITH base AS (
       SELECT
@@ -315,8 +320,10 @@ def dettaglio_asset(request, pk):
         },
         "nGuasti": len(rows)
     }
-        
-    return render(request, 'core/lampione_asset.html', context)
+    if lampNuovo:
+        return render(request, 'core/lampione_asset.html', context)
+    else:
+        return render(request, 'core/lampione_singolo.html', context)
 
 
 def dettaglio_rischio(request, livello):
