@@ -289,9 +289,15 @@
                                 {% endif %}
                             </td>
                             
+                            {% if is_risk_view %}
                             <td data-label="Azione" class="text-end">
                                 <a href="{% url 'dettaglio_asset' lampione.pk %}" class="btn-neon-sm">Vedi Scheda</a>
                             </td>
+                            {% else %}
+                            <td data-label="Azione" class="text-end">
+                                <a href="{% url 'dettaglio_lampione' lampione.pk %}" class="btn-neon-sm">Vedi Scheda</a>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% empty %}
                         <tr>

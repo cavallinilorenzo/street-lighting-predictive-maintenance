@@ -170,6 +170,7 @@ def dettaglio_lampione(request, pk):
     folium.Marker([lat, lon], tooltip=f"Lampione {codice_fisico}").add_to(m)
 
     storico = LampioneManutenzione.objects.filter(arm_id=lampione.arm_id).exclude(pk=pk).order_by('-sgn_data_inserimento')
+    print("lampione")
 
     return render(request, 'core/lampione_singolo.html', {
         'lampione': lampione,
