@@ -1,4 +1,4 @@
-# 💡 Smart City: Manutenzione Predittiva Illuminazione Pubblica
+# 💡 Smart Beam: Manutenzione Predittiva Illuminazione Pubblica
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-6.0.2-092E20.svg?logo=django&logoColor=white)
@@ -14,6 +14,7 @@ Questo progetto è una piattaforma web sviluppata per ottimizzare la gestione de
 * **Dashboard Statistica**: Interfaccia dedicata all'analisi dei dati storici, che permette di monitorare le cause di guasto ricorrenti e le tipologie di interventi di manutenzione effettuati.
 * **Reportistica Automatica**: Generazione dinamica di report tecnici in formato PDF per il singolo asset. Il documento include specifiche hardware, coordinate GPS e stime di rischio predittivo.
 * **Explainable AI (XAI)**: L'applicativo fornisce una spiegazione testuale in linguaggio naturale per giustificare il livello di rischio, basandosi su parametri misurabili come l'età di servizio dell'impianto, lo stress termico (es. potenza elevata) e l'incidenza storica di guasti per modelli simili.
+* **Sistema di Segnalazione Guasti**: Modulo dedicato agli operatori per la segnalazione di anomalie fisiche sul campo (es. lampada fulminata, danni strutturali o usura). Ogni segnalazione genera l'apertura di un ticket di manutenzione all'interno del database, consentendo un tracciamento puntuale degli interventi necessari.
 
 ## Modello Predittivo
 * Il cuore del progetto si basa su tecniche di **Analisi di Sopravvivenza (Survival Analysis)**.
