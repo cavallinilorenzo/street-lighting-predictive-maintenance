@@ -13,7 +13,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss
 
 
-HORIZON_DEFAULT = 110
+HORIZON_DEFAULT = 200
 
 # 75 migliore
 
@@ -150,7 +150,7 @@ def main():
 
 if __name__ == "__main__":
     file_path = main()
-    '''import pandas as pd
+    import pandas as pd
     import matplotlib.pyplot as plt
 
 
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     df = pd.read_csv(file_path)
     print(df.head())
     # prendi colonna
-    y = df[f"prob_guasto_entra_{HORIZON_DEFAULT}gg"]  # estrae "prob_guasto_entra_XXgg"
+    y = df[f"prob_guasto"]  # estrae "prob_guasto_entra_XXgg"
 
     # grafico
     plt.figure()
@@ -168,4 +168,4 @@ if __name__ == "__main__":
     plt.ylabel("Probabilità guasto entro 25gg")
     plt.xlabel("Index")
 
-    plt.show()'''
+    plt.show()
