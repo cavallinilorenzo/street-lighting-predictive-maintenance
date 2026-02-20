@@ -13,4 +13,5 @@ urlpatterns = [
     path('dettaglio-rischio/<str:livello>/', dettaglio_rischio, name='dettaglio_rischio'),
     path('asset/<int:pk>/pdf/', scarica_pdf_asset, name='scarica_pdf_asset'),
     path('dettaglio-intervento/<path:tipo_intervento>/', dettaglio_intervento, name='dettaglio_intervento'),
+    path('asset/<int:pk>/aggiuntaInterventiApi', aggiuntaInterventiApi, name='aggiuntaInterventiApi'),
 ]

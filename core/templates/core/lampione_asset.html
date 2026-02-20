@@ -134,38 +134,7 @@
     </a>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            if (window.opener || window.history.length <= 1) {
-                document.getElementById('btn-close').style.display = 'inline-flex';
-            } else {
-                document.getElementById('btn-back').style.display = 'inline-flex';
-            }
-        });
-
-        function simulaInvioTicket() {
-            // 1. Sostituisce il form con un messaggio di successo accattivante
-            document.getElementById('modalBodyForm').innerHTML = `
-                <div class="alert alert-success text-center mb-0">
-                    <h1 style="color: #10b981;">✔️</h1>
-                    <h4 class="mt-2">Ticket Inviato!</h4>
-                    <p class="mb-0">La segnalazione per l'asset <b>#{{ lampione.arm_id }}</b> è stata registrata a sistema (Simulazione).</p>
-                </div>
-            `;
-            
-            // 2. Nasconde i bottoni "Annulla" e "Invia"
-            document.getElementById('modalFooterForm').style.display = 'none';
-            
-            // 3. (Opzionale) Chiude il popup da solo dopo 3.5 secondi
-            setTimeout(() => {
-                let modalElement = document.getElementById('modalSegnalazione');
-                let modalInstance = bootstrap.Modal.getInstance(modalElement);
-                if(modalInstance) {
-                    modalInstance.hide();
-                }
-            }, 3500);
-        }
-    </script>
+    
 
     <div class="row align-items-center mb-4">
         <div class="col-md-8">
@@ -309,6 +278,56 @@
                 </div>
             </div>
         </div>
+        <div class="col-12">
+  <div class="card-custom">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="mb-0">
+        <span class="material-icons" style="vertical-align:bottom; color: var(--accent)">assignment</span>
+        Storico Segnalazioni
+      </h5>
+      <span class="small" style="color:#94a3b8; font-weight:600;">
+        Asset #{{ lampione.arm_id }}
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-borderless table-segnalazioni mb-0">
+        <thead>
+          <tr>
+            <th style="width: 190px;">Datetime</th>
+            <th style="width: 240px;">Problema</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {# Se hai una lista dal backend tipo "interventi" #}
+          {% if segnalazioni %}
+            {% for r in segnalazioni %}
+              <tr>
+                <td style="color:#cbd5e1;">
+                  {{ r.datetime|date:"d/m/Y H:i" }}
+                </td>
+                <td>
+                  <span class="badge-problema">{{ r.problema }}</span>
+                </td>
+                <td style="color:#e2e8f0;">
+                  {{ r.note|default:"—" }}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="3" class="text-center" style="color:#94a3b8; padding: 18px 10px;">
+                Nessuna segnalazione registrata per questo asset.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
         <button type="button" class="btn btn-warning mt-3" data-bs-toggle="modal" data-bs-target="#modalSegnalazione">
     <i class="fa fa-exclamation-triangle"></i> Segnala Guasto
 </button>
@@ -326,7 +345,7 @@
          <p class="text-muted small">Usa questo modulo per simulare l'apertura di un ticket di manutenzione.</p>
          
          <label class="form-label fw-bold">Tipo di problema</label>
-         <select class="form-select mb-3">
+         <select class="form-select mb-3" id="problema">
             <option>Lampada spenta / Fulminata</option>
             <option>Luce sfarfallante</option>
             <option>Palo danneggiato o pericolante</option>
@@ -334,8 +353,8 @@
             <option>Altro...</option>
          </select>
          
-         <label class="form-label fw-bold">Note per i tecnici</label>
-         <textarea class="form-control" rows="3" placeholder="Inserisci dettagli aggiuntivi..."></textarea>
+         <label class="form-label fw-bold" >Note per i tecnici</label>
+         <textarea class="form-control" id="note" rows="3" placeholder="Inserisci dettagli aggiuntivi..."></textarea>
       </div>
       
       <div class="modal-footer" id="modalFooterForm">
@@ -355,8 +374,125 @@
 <a href="{% url 'index' %}" class="btn-home-floating" title="Torna alla Home">
     <span class="material-icons">home</span>
 </a>
+<script>
+        async function getRequest(url) {
+            try {
+                const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+                });
 
+                if (!response.ok) {
+                throw new Error(`Errore HTTP: ${response.status}`);
+                }
+
+                const data = await response.json();
+                return data;
+
+            } catch (error) {
+                console.error("Errore nella richiesta GET:", error);
+                throw error;
+            }
+        }
+        document.addEventListener("DOMContentLoaded", function() {
+            if (window.opener || window.history.length <= 1) {
+                document.getElementById('btn-close').style.display = 'inline-flex';
+            } else {
+                document.getElementById('btn-back').style.display = 'inline-flex';
+            }
+        });
+
+        function simulaInvioTicket() {
+
+            const problema = document.getElementById("problema").value;
+            const note = document.getElementById("note").value;
+
+            // datetime locale
+            const now = new Date();
+            const dt = now.toLocaleString("it-IT", {
+                day: "2-digit", month: "2-digit", year: "numeric",
+                hour: "2-digit", minute: "2-digit"
+            });
+
+            // aggiunge riga in tabella (UI)
+            const tbody = document.getElementById("tbodySegnalazioni");
+            if (tbody) {
+                // se era vuota con il messaggio "nessuna segnalazione", pulisci
+                if (tbody.querySelector("td[colspan='3']")) tbody.innerHTML = "";
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                <td style="color:#cbd5e1;">${dt}</td>
+                <td><span class="badge-problema">${problema}</span></td>
+                <td style="color:#e2e8f0;">${note ? note : "—"}</td>
+                `;
+                tbody.prepend(tr);
+            }
+            // 1. Sostituisce il form con un messaggio di successo accattivante
+            richiesta="aggiuntaInterventiApi?problema="+document.getElementById("problema").value+"&note="+document.getElementById("note").value;
+            document.getElementById('modalBodyForm').innerHTML = `
+                <div class="alert alert-success text-center mb-0">
+                    <h1 style="color: #10b981;">✔️</h1>
+                    <h4 class="mt-2">Ticket Inviato!</h4>
+                    <p class="mb-0">La segnalazione per l'asset <b>#{{ lampione.arm_id }}</b> è stata registrata a sistema (Simulazione).</p>
+                </div>
+            `;
+            
+            getRequest(richiesta)
+            .then(data => {
+                console.log("Dati ricevuti:", data);
+            })
+            .catch(err => {
+                console.error(err);
+            });
+            
+            // 2. Nasconde i bottoni "Annulla" e "Invia"
+            document.getElementById('modalFooterForm').style.display = 'none';
+            
+            // 3. (Opzionale) Chiude il popup da solo dopo 3.5 secondi
+            setTimeout(() => {
+                let modalElement = document.getElementById('modalSegnalazione');
+                let modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if(modalInstance) {
+                    modalInstance.hide();
+                }
+            }, 3500);
+        }
+    </script>
 <style>
+    .table-segnalazioni th,
+  .table-segnalazioni td{
+      background: transparent !important;
+      color: #f8fafc !important;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 12px 10px;
+      vertical-align: middle;
+  }
+
+  .table-segnalazioni thead th{
+      color: #94a3b8 !important;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .table-segnalazioni tbody tr:hover td{
+      background: rgba(255,255,255,0.03) !important;
+  }
+
+  .badge-problema{
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0, 242, 255, 0.08);
+      color: var(--accent);
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 6px 10px;
+      display: inline-block;
+  }
+
     .btn-home-floating {
         position: fixed;
         bottom: 30px;

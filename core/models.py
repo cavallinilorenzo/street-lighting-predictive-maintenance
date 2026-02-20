@@ -36,6 +36,12 @@ class LampioneNuovo(LampioneBase):
     risk_score_date= models.DateTimeField(null=True, blank=True)
     pass
 
+class Segnalazioni(models.Model):
+    arm_id = models.IntegerField(db_index=True)
+    note = models.CharField(max_length=255, null=True, blank=True)
+    problema = models.CharField(max_length=255, null=True, blank=True)
+    datetime= models.DateTimeField(null=True, blank=True)
+
 # Tabella per lampioni_con_manutenzione.csv
 class LampioneManutenzione(LampioneBase):
     latitudine = models.FloatField(null=True, blank=True)

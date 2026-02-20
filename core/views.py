@@ -8,6 +8,7 @@ from django.db.models import Count
 from django.core.paginator import Paginator
 from django.urls import reverse
 from django.http import FileResponse
+from django.http import JsonResponse
 
 import folium
 from folium.plugins import MarkerCluster
@@ -19,12 +20,20 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-from .models import LampioneNuovo, LampioneManutenzione
+from .models import LampioneNuovo, LampioneManutenzione, Segnalazioni
 
 def index(request):
     top_critici = LampioneNuovo.objects.filter(risk_score__isnull=False).order_by('-risk_score')[:5]
     return render(request, 'core/index.html', {'top_critici': top_critici})
 
+def aggiuntaInterventiApi(request, pk):
+    problema = request.GET.get("problema")   
+    note = request.GET.get("note")
+    lampione = get_object_or_404(LampioneNuovo, pk=pk)
+    Segnalazioni.objects.create(arm_id=lampione.arm_id, problema=problema, note=note, datetime=datetime.now())
+    print(f"Ricevuta richiesta di intervento per lampione {lampione.arm_id} con problema '{problema}' e note '{note}'")
+    # Simulazione di aggiunta intervento
+    return JsonResponse({"data": f"Intervento registrato per lampione {lampione.arm_id} con problema '{problema}' e note '{note}'"})
 
 def mappa_lampioni(request):
     start_coords = [41.9028, 12.4964]
@@ -180,12 +189,14 @@ def dettaglio_lampione(request, pk):
 
 def dettaglio_asset(request, pk):
     lampNuovo=True
+    segnalazioni=""
     if LampioneManutenzione.objects.filter(pk=pk).exists():
         lampNuovo = False
         lampione = LampioneManutenzione.objects.filter(pk=pk).first()
     else:
         lampNuovo = True
         lampione = LampioneNuovo.objects.filter(pk=pk).first()
+        segnalazioni=Segnalazioni.objects.filter(arm_id=lampione.arm_id).order_by('-datetime')
     # --- 1. PRIMO TENTATIVO: Dati specifici per combinazione Altezza / Potenza ---
     sql_specific = """WITH base AS (
       SELECT
@@ -318,7 +329,8 @@ def dettaglio_asset(request, pk):
             'messaggio': messaggio,
             'motivazione': motivazione
         },
-        "nGuasti": len(rows)
+        "nGuasti": len(rows),
+        "segnalazioni": segnalazioni
     }
     if lampNuovo:
         return render(request, 'core/lampione_asset.html', context)

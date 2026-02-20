@@ -3,6 +3,8 @@ import joblib
 import numpy as np
 import pandas as pd
 
+#python addestramento_piu_predizione.py --train_csv aggiunta_giorni.csv --predict_csv dataset_con_vita.csv --out_csv ..\..\output.csv --horizon 40
+
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
