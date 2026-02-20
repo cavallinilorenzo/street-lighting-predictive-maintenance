@@ -1,4 +1,4 @@
-# 💡 Smart City: Manutenzione Predittiva Illuminazione Pubblica
+# 💡 Smart Beam: Manutenzione Predittiva Illuminazione Pubblica
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg?logo=python&logoColor=white)
 ![Django](https://img.shields.io/badge/Django-6.0.2-092E20.svg?logo=django&logoColor=white)
