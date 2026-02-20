@@ -59,7 +59,7 @@ def mappa_lampioni(request):
                 <b style="color: gray;">Stato:</b> 
                 <span style="color:{colore_icona}; font-weight:bold;">{stato_salute}</span><br>
                 
-                <b style="color: gray;">Rischio Sostituzione (120gg):</b> {rischio_perc}<br>
+                <b style="color: gray;">Rischio Sostituzione (60gg):</b> {rischio_perc}<br>
                 <hr style="margin: 5px 0;">
                 
                 <a href="{url_dettaglio}" target="_blank" 
@@ -447,7 +447,7 @@ def scarica_pdf_asset(request, pk):
     giorni = getattr(lampione, 'traQuantoSiRompe', "N/D")
     
     data_ml = [
-        ['Rischio Sostituzione (120gg)', risk_perc],
+        ['Rischio Sostituzione (60gg)', risk_perc],
         ['Giorni Stimati alla Rottura', f"{giorni} gg" if giorni != "N/D" else "N/D"]
     ]
     t2 = Table(data_ml, colWidths=[200, 250])
